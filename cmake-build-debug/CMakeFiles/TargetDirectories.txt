@@ -1,0 +1,3 @@
+D:/Libraries/Other Work/Github Repository/cmpt785-g5-secure-filesystem/cmake-build-debug/CMakeFiles/cmpt785_g5_secure_filesystem.dir
+D:/Libraries/Other Work/Github Repository/cmpt785-g5-secure-filesystem/cmake-build-debug/CMakeFiles/edit_cache.dir
+D:/Libraries/Other Work/Github Repository/cmpt785-g5-secure-filesystem/cmake-build-debug/CMakeFiles/rebuild_cache.dir

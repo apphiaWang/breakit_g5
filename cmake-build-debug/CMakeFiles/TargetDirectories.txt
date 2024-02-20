@@ -1,3 +1,0 @@
-/Users/hardev/Desktop/sfu/spring-2024/cmpt-785/project/cmpt785-g5-secure-filesystem/cmake-build-debug/CMakeFiles/cmpt785_g5_secure_filesystem.dir
-/Users/hardev/Desktop/sfu/spring-2024/cmpt-785/project/cmpt785-g5-secure-filesystem/cmake-build-debug/CMakeFiles/edit_cache.dir
-/Users/hardev/Desktop/sfu/spring-2024/cmpt-785/project/cmpt785-g5-secure-filesystem/cmake-build-debug/CMakeFiles/rebuild_cache.dir

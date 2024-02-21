@@ -52,7 +52,7 @@ void print_working_directory() {
     std::cout << "Current working directory: " << std::filesystem::current_path() << std::endl;
 }
 
-void createDirectory(const std::string& input) {
+void create_directory(const std::string& input) {
     // Extract directory name from input
     std::string command = input.substr(input.find(" ") + 1);
 
@@ -69,6 +69,7 @@ void createDirectory(const std::string& input) {
             return;
         }
     }
+
     // Check if directory already exists
     if (fs::exists(command)) {
         std::cout << "Directory already exists" << std::endl;
@@ -79,6 +80,7 @@ void createDirectory(const std::string& input) {
     fs::create_directory(command);
     std::cout << "Directory created successfully" << std::endl;
 }
+
 void cat_file(const std::string& filename) {
     std::ifstream file(filename);
     if (file.is_open()) {

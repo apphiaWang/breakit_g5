@@ -95,6 +95,28 @@ void cat_file(const std::string& filename) {
     }
 }
 
+bool isExactMatch(const std::string& path, const std::string& target) {
+
+    // Directly handle special cases for current and parent directory
+    if (target == "." || target == "..") {
+        // No need for case sensitivity check
+        return true;
+    }
+
+    for (const auto& entry : fs::directory_iterator(fs::current_path())) {
+        if (entry.is_directory()) {
+            // Extract the exact name of the current directory entry
+            std::string entryName = entry.path().filename().string();
+
+            // Compare it against the target directory name for an exact match
+            if (entryName == target) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 void change_directory(const std::string& path) {
 
     // Extract directory name from input
@@ -121,7 +143,7 @@ void change_directory(const std::string& path) {
 
     // General case
     fs::path new_path = fs::current_path() / path;
-    if (fs::exists(new_path) && fs::is_directory(new_path)) {
+    if (isExactMatch(fs::current_path().string(), path) && (fs::exists(new_path) && fs::is_directory(new_path))) {
         if (chdir(new_path.c_str()) == 0) {
             std::cout << "Directory changed to " << new_path << std::endl;
         } else {

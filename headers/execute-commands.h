@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <sys/stat.h>
+#include <sstream>
 #include <fstream>
 
 // Create a namespace alias for convenience
@@ -95,62 +96,73 @@ void cat_file(const std::string& filename) {
     }
 }
 
-bool isExactMatch(const std::string& path, const std::string& target) {
-
-    // Directly handle special cases for current and parent directory
-    if (target == "." || target == "..") {
-        // No need for case sensitivity check
-        return true;
-    }
-
-    for (const auto& entry : fs::directory_iterator(fs::current_path())) {
-        if (entry.is_directory()) {
-            // Extract the exact name of the current directory entry
-            std::string entryName = entry.path().filename().string();
-
-            // Compare it against the target directory name for an exact match
-            if (entryName == target) {
-                return true;
-            }
+// Utility function to split a string by delimiter into a vector of strings
+std::vector<std::string> split(const std::string& s, char delimiter) {
+    std::vector<std::string> tokens;
+    std::string token;
+    std::istringstream tokenStream(s);
+    while (std::getline(tokenStream, token, delimiter)) {
+        if (!token.empty()) {
+            tokens.push_back(token);
         }
     }
-    return false;
+    return tokens;
 }
 
-void change_directory(const std::string& path) {
+// Check if a single directory component matches exactly in the given directory
+bool isExactComponentMatch(const fs::path& base, const std::string& component) {
+    if (component == "." || component == ".." || component.empty()) {
+        return true; // These are always considered valid
+    }
 
-    // Extract directory name from input
-    std::string command = path.substr(path.find(" ") + 1);
+    for (const auto& entry : fs::directory_iterator(base)) {
+        if (entry.is_directory() && entry.path().filename() == component) {
+            return true; // Found an exact case-sensitive match
+        }
+    }
+    return false; // No match found
+}
 
-    // Check if directory name is empty
-    if (path.empty()) {
-        std::cout << "Directory not specified" << std::endl;
+void change_directory(const std::string& inputPath) {
+    if (inputPath.empty()) {
+        std::cout << "Directory name not specified." << std::endl;
         return;
     }
 
-    // Special case for cd /
-    if (path == "/") {
-        const char* home = getenv("HOME"); // POSIX systems
-        if (home != nullptr) {
-            if (chdir(home) == 0) {
-                std::cout << "Moved to root directory." << std::endl;
-            } else {
-                std::cerr << "Failed to move to root directory." << std::endl;
-            }
+    // Special case for "cd /" to go to the user's home directory
+    if (inputPath == "/") {
+        const char* home = getenv("HOME");
+        if (home && chdir(home) == 0) {
+            std::cout << "Moved to root directory." << std::endl;
+            return;
+        } else {
+            std::cerr << "Failed to move to root directory." << std::endl;
             return;
         }
     }
 
-    // General case
-    fs::path new_path = fs::current_path() / path;
-    if (isExactMatch(fs::current_path().string(), path) && (fs::exists(new_path) && fs::is_directory(new_path))) {
-        if (chdir(new_path.c_str()) == 0) {
-            std::cout << "Directory changed to " << new_path << std::endl;
+    fs::path newPath;
+    std::vector<std::string> components = split(inputPath, '/');
+    bool isAbsolute = inputPath.front() == '/';
+
+    // Start from the root or current path based on the input
+    newPath = isAbsolute ? fs::path("/") : fs::current_path();
+
+    for (const auto& component : components) {
+        if (isExactComponentMatch(newPath, component)) {
+            // Construct the new path incrementally to handle nested directories
+            newPath /= component;
         } else {
-            std::cerr << "Failed to change directory." << std::endl;
+            std::cout << "Directory does not exist or case mismatch: " << component << std::endl;
+            return;
         }
+    }
+
+    // Attempt to change to the final path
+    if (chdir(newPath.c_str()) == 0) {
+        std::cout << "Directory changed to " << newPath << std::endl;
     } else {
-        std::cout << "Directory does not exist." << std::endl;
+        std::cerr << "Failed to change directory to " << newPath << std::endl;
     }
 }
 

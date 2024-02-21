@@ -25,6 +25,8 @@ int main() {
             list_directory_contents();
         } else if (command.substr(0, 4) == "cat ") {
             // cat function
+        } else if (command.substr(0, 6) == "mkdir ") {
+            createDirectory(command);
         } else {
             std::cout << "Unknown command. Please try again." << std::endl;
         }

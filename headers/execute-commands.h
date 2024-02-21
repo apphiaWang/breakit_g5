@@ -171,6 +171,9 @@ void make_file(const std::string& make_file) {
     // Extract filename and contents from input
     std::istringstream iss(make_file);
     std::string command, filename, contents;
+    bool flag= false;
+
+    flag = 0;
     iss >> command >> filename; // Read command and filename
     std::getline(iss >> std::ws, contents); // Read contents, including whitespace
 
@@ -179,6 +182,12 @@ void make_file(const std::string& make_file) {
     filename.erase(filename.find_last_not_of(" \t") + 1);
     contents.erase(0, contents.find_first_not_of(" \t"));
     contents.erase(contents.find_last_not_of(" \t") + 1);
+
+    // Check if both filename and contents are missing
+    if (filename.empty() && contents.empty()) {
+        std::cout << "<filename> and <contents> arguments are missing, please try again" << std::endl;
+        return;
+    }
 
     // Check if filename is empty
     if (filename.empty()) {
@@ -193,6 +202,18 @@ void make_file(const std::string& make_file) {
             return;
         }
     }
+
+   // Check if contents are missing
+    if (contents.empty()) {
+        std::cout << "<content> argument is missing, please try again" << std::endl;
+        return;
+    }
+    // Check if the file already exists
+    if (fs::exists(filename)) {
+        std::cout << "The file '" << filename << "' already exists. It will be overwritten." << std::endl;
+        flag = true;
+    }
+
     // Create or open the file
     std::ofstream mkfile(filename);
 
@@ -206,7 +227,12 @@ void make_file(const std::string& make_file) {
     mkfile<< contents;
     mkfile.close();
 
-    std::cout << "File is created successfully, called: " << filename << std::endl;
+    // Output success message based on whether the file was created or modified
+    if (flag) {
+        std::cout << "File is modified successfully:  " << filename << std::endl;
+    } else {
+        std::cout << "File is created successfully: " << filename << std::endl;
+    }
 }
 
 #endif //CMPT785_G5_SECURE_FILESYSTEM_EXECUTE_COMMANDS_H

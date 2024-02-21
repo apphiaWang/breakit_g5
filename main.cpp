@@ -18,7 +18,8 @@ int main() {
             // terminate function
             shouldExit = true;
         } else if (command.substr(0, 3) == "cd ") {
-            //cd function
+            std::string dir = command.substr(3);
+            change_directory(dir);
         } else if (command == "pwd") {
             print_working_directory();
         } else if (command == "ls") {

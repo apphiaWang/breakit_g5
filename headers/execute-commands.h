@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <filesystem>
+#include <unistd.h>
 #include <dirent.h>
 #include <sys/stat.h>
 #include <fstream>
@@ -91,6 +92,43 @@ void cat_file(const std::string& filename) {
         file.close();
     } else {
         std::cerr << "Unable to open file: " << filename << std::endl;
+    }
+}
+
+void change_directory(const std::string& path) {
+
+    // Extract directory name from input
+    std::string command = path.substr(path.find(" ") + 1);
+
+    // Check if directory name is empty
+    if (path.empty()) {
+        std::cout << "Directory not specified" << std::endl;
+        return;
+    }
+
+    // Special case for cd /
+    if (path == "/") {
+        const char* home = getenv("HOME"); // POSIX systems
+        if (home != nullptr) {
+            if (chdir(home) == 0) {
+                std::cout << "Moved to root directory." << std::endl;
+            } else {
+                std::cerr << "Failed to move to root directory." << std::endl;
+            }
+            return;
+        }
+    }
+
+    // General case
+    fs::path new_path = fs::current_path() / path;
+    if (fs::exists(new_path) && fs::is_directory(new_path)) {
+        if (chdir(new_path.c_str()) == 0) {
+            std::cout << "Directory changed to " << new_path << std::endl;
+        } else {
+            std::cerr << "Failed to change directory." << std::endl;
+        }
+    } else {
+        std::cout << "Directory does not exist." << std::endl;
     }
 }
 

@@ -5,8 +5,11 @@
 #include <iomanip>
 
 void available_commands() {
-    int commandWidth = 40;      // Width for the command column
-    int descriptionWidth = 80;  // Width for the description column
+
+    // Width for the command column
+    int commandWidth = 40;
+    // Width for the description column
+    int descriptionWidth = 80;
 
     std::cout << std::endl;
     std::cout << std::setw(commandWidth) << std::left << "Available Commands:" << std::setw(descriptionWidth) << std::left << "Description" << std::endl;
@@ -21,9 +24,7 @@ void available_commands() {
     std::cout << std::setw(commandWidth) << std::left << "mkdir <directory>" << std::setw(descriptionWidth) << std::left << "Create a new directory" << std::endl;
     std::cout << std::setw(commandWidth) << std::left << "mkfile <filename> <contents>" << std::setw(descriptionWidth) << std::left << "Create a new file <filename> with the ascii printable contents <contents>" << std::endl;
 
-    // Assuming the isAdmin check or user role logic is implemented elsewhere
     std::cout << std::setw(commandWidth) << std::left << "adduser <username>" << std::setw(descriptionWidth) << std::left << "Add new user by the given <username>" << std::endl;
-
     std::cout << std::setw(commandWidth) << std::left << "exit" << std::setw(descriptionWidth) << std::left << "Terminate the program" << std::endl;
 }
 

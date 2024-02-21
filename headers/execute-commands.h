@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <dirent.h>
 #include <sys/stat.h>
+#include <fstream>
 
 // Create a namespace alias for convenience
 namespace fs = std::filesystem;
@@ -78,4 +79,17 @@ void createDirectory(const std::string& input) {
     fs::create_directory(command);
     std::cout << "Directory created successfully" << std::endl;
 }
+void cat_file(const std::string& filename) {
+    std::ifstream file(filename);
+    if (file.is_open()) {
+        std::string line;
+        while (std::getline(file, line)) {
+            std::cout << line << std::endl;
+        }
+        file.close();
+    } else {
+        std::cerr << "Unable to open file: " << filename << std::endl;
+    }
+}
+
 #endif //CMPT785_G5_SECURE_FILESYSTEM_EXECUTE_COMMANDS_H

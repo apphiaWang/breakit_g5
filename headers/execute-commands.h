@@ -8,6 +8,7 @@
 #include <sys/stat.h>
 #include <sstream>
 #include <fstream>
+#include <vector>
 
 // Create a namespace alias for convenience
 namespace fs = std::filesystem;
@@ -163,6 +164,74 @@ void change_directory(const std::string& inputPath) {
         std::cout << "Directory changed to " << newPath << std::endl;
     } else {
         std::cerr << "Failed to change directory to " << newPath << std::endl;
+    }
+}
+
+void make_file(const std::string& make_file) {
+    // Extract filename and contents from input
+    std::istringstream iss(make_file);
+    std::string command, filename, contents;
+    bool flag= false;
+
+    flag = 0;
+    iss >> command >> filename; // Read command and filename
+    std::getline(iss >> std::ws, contents); // Read contents, including whitespace
+
+    // Trim leading and trailing whitespace from filename and contents
+    filename.erase(0, filename.find_first_not_of(" \t"));
+    filename.erase(filename.find_last_not_of(" \t") + 1);
+    contents.erase(0, contents.find_first_not_of(" \t"));
+    contents.erase(contents.find_last_not_of(" \t") + 1);
+
+    // Check if both filename and contents are missing
+    if (filename.empty() && contents.empty()) {
+        std::cout << "<filename> and <contents> arguments are missing, please try again" << std::endl;
+        return;
+    }
+
+    // Check if filename is empty
+    if (filename.empty()) {
+        std::cout << "Filename not specified" << std::endl;
+        return;
+    }
+
+    // Check to see if any invalid characters exist in the filename
+    for (char c : filename) {
+        if (std::isspace(c) || c == '?' || c == ':' || c == '\\' || c == '*' || c == '/' || c == '"' || c == '|') {
+            std::cout << "Invalid characters added to the filename, please re-enter" << std::endl;
+            return;
+        }
+    }
+
+   // Check if contents are missing
+    if (contents.empty()) {
+        std::cout << "<content> argument is missing, please try again" << std::endl;
+        return;
+    }
+    // Check if the file already exists
+    if (fs::exists(filename)) {
+        std::cout << "The file '" << filename << "' already exists. It will be overwritten." << std::endl;
+        flag = true;
+    }
+
+    // Create or open the file
+    std::ofstream mkfile(filename);
+
+    // Check if file is opened successfully
+    if (!mkfile.is_open()) {
+        std::cerr << "Unable to open the specified file" << std::endl;
+        return;
+    }
+
+    // Write contents to the file
+    mkfile<< contents;
+    mkfile.close();
+
+    // Output success message based on whether the file was created or modified
+    if (flag) {
+        std::cout << "File is modified successfully:  " << filename << std::endl;
+    } else {
+        std::cout << "File is created successfully: " << filename << std::endl;
     }
 }
 

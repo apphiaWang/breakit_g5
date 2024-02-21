@@ -27,6 +27,8 @@ int main() {
         } else if (command.substr(0, 4) == "cat ") {
             std::string filename = command.substr(4);
             cat_file(filename);
+        } else if (command.substr(0, 7) == "mkfile ") {
+            make_file(command);
         } else if (command.substr(0, 6) == "mkdir ") {
             create_directory(command);
         } else {

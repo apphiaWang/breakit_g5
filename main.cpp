@@ -24,7 +24,8 @@ int main() {
         } else if (command == "ls") {
             list_directory_contents();
         } else if (command.substr(0, 4) == "cat ") {
-            // cat function
+            std::string filename = command.substr(4);
+            cat_file(filename);
         } else {
             std::cout << "Unknown command. Please try again." << std::endl;
         }

@@ -23,8 +23,6 @@ int main() {
             print_working_directory();
         } else if (command == "ls") {
             list_directory_contents();
-        } else if (command.substr(0, 7) == "mkfile ") {
-            make_file(command);
         } else if (command.substr(0, 4) == "cat ") {
             std::string filename = command.substr(4);
             cat_file(filename);

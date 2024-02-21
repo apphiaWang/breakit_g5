@@ -3,8 +3,10 @@
 
 #include <iostream>
 #include <filesystem>
+#include <unistd.h>
 #include <dirent.h>
 #include <sys/stat.h>
+#include <sstream>
 #include <fstream>
 
 // Create a namespace alias for convenience
@@ -91,6 +93,76 @@ void cat_file(const std::string& filename) {
         file.close();
     } else {
         std::cerr << "Unable to open file: " << filename << std::endl;
+    }
+}
+
+// Utility function to split a string by delimiter into a vector of strings
+std::vector<std::string> split(const std::string& s, char delimiter) {
+    std::vector<std::string> tokens;
+    std::string token;
+    std::istringstream tokenStream(s);
+    while (std::getline(tokenStream, token, delimiter)) {
+        if (!token.empty()) {
+            tokens.push_back(token);
+        }
+    }
+    return tokens;
+}
+
+// Check if a single directory component matches exactly in the given directory
+bool isExactComponentMatch(const fs::path& base, const std::string& component) {
+    if (component == "." || component == ".." || component.empty()) {
+        return true; // These are always considered valid
+    }
+
+    for (const auto& entry : fs::directory_iterator(base)) {
+        if (entry.is_directory() && entry.path().filename() == component) {
+            return true; // Found an exact case-sensitive match
+        }
+    }
+    return false; // No match found
+}
+
+void change_directory(const std::string& inputPath) {
+    if (inputPath.empty()) {
+        std::cout << "Directory name not specified." << std::endl;
+        return;
+    }
+
+    // Special case for "cd /" to go to the user's home directory
+    if (inputPath == "/") {
+        const char* home = getenv("HOME");
+        if (home && chdir(home) == 0) {
+            std::cout << "Moved to root directory." << std::endl;
+            return;
+        } else {
+            std::cerr << "Failed to move to root directory." << std::endl;
+            return;
+        }
+    }
+
+    fs::path newPath;
+    std::vector<std::string> components = split(inputPath, '/');
+    bool isAbsolute = inputPath.front() == '/';
+
+    // Start from the root or current path based on the input
+    newPath = isAbsolute ? fs::path("/") : fs::current_path();
+
+    for (const auto& component : components) {
+        if (isExactComponentMatch(newPath, component)) {
+            // Construct the new path incrementally to handle nested directories
+            newPath /= component;
+        } else {
+            std::cout << "Directory does not exist or case mismatch: " << component << std::endl;
+            return;
+        }
+    }
+
+    // Attempt to change to the final path
+    if (chdir(newPath.c_str()) == 0) {
+        std::cout << "Directory changed to " << newPath << std::endl;
+    } else {
+        std::cerr << "Failed to change directory to " << newPath << std::endl;
     }
 }
 

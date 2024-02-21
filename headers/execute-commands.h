@@ -52,6 +52,33 @@ void print_working_directory() {
     std::cout << "Current working directory: " << std::filesystem::current_path() << std::endl;
 }
 
+void createDirectory(const std::string& input) {
+    // Extract directory name from input
+    std::string command = input.substr(input.find(" ") + 1);
+
+    // Check if directory name is empty
+    if (command.empty()) {
+        std::cout << "Directory not specified" << std::endl;
+        return;
+    }
+
+    // Check if there are any invalid characters in the input for the directory name
+    for (char c : command) {
+        if (std::isspace(c) || c == '?' || c == ':' || c == '\\' || c == '*' || c == '/' || c == '"' || c == '|') {
+            std::cout << "Invalid characters added to the directory filename, please re-enter" << std::endl;
+            return;
+        }
+    }
+    // Check if directory already exists
+    if (fs::exists(command)) {
+        std::cout << "Directory already exists" << std::endl;
+        return;
+    }
+
+    // Create directory
+    fs::create_directory(command);
+    std::cout << "Directory created successfully" << std::endl;
+}
 void cat_file(const std::string& filename) {
     std::ifstream file(filename);
     if (file.is_open()) {

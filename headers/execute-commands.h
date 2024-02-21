@@ -94,4 +94,45 @@ void cat_file(const std::string& filename) {
     }
 }
 
+void make_file(const std::string& make_file) {
+    // Extract filename and contents from input
+    std::istringstream iss(make_file);
+    std::string command, filename, contents;
+    iss >> command >> filename; // Read command and filename
+    std::getline(iss >> std::ws, contents); // Read contents, including whitespace
+
+    // Trim leading and trailing whitespace from filename and contents
+    filename.erase(0, filename.find_first_not_of(" \t"));
+    filename.erase(filename.find_last_not_of(" \t") + 1);
+    contents.erase(0, contents.find_first_not_of(" \t"));
+    contents.erase(contents.find_last_not_of(" \t") + 1);
+
+    // Check if filename is empty
+    if (filename.empty()) {
+        std::cout << "Filename not specified" << std::endl;
+        return;
+    }
+
+    // Check to see if any invalid characters exist in the filename
+    for (char c : filename) {
+        if (std::isspace(c) || c == '?' || c == ':' || c == '\\' || c == '*' || c == '/' || c == '"' || c == '|') {
+            std::cout << "Invalid characters added to the filename, please re-enter" << std::endl;
+            return;
+        }
+    }
+    // Create or open the file
+    std::ofstream mkfile(filename);
+
+    // Check if file is opened successfully
+    if (!mkfile.is_open()) {
+        std::cerr << "Unable to open the specified file" << std::endl;
+        return;
+    }
+
+    // Write contents to the file
+    mkfile<< contents;
+    mkfile.close();
+
+    std::cout << "File is created successfully, called: " << filename << std::endl;
+}
 #endif //CMPT785_G5_SECURE_FILESYSTEM_EXECUTE_COMMANDS_H

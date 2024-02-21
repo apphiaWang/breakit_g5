@@ -1,5 +1,6 @@
 #include <iostream>
 #include "headers/menu-commands.h"
+#include "headers/execute-commands.h"
 
 int main() {
     std::cout << "Hello, World!" << std::endl;
@@ -19,9 +20,9 @@ int main() {
         } else if (command.substr(0, 3) == "cd ") {
             //cd function
         } else if (command == "pwd") {
-            // pwd function
+            print_working_directory();
         } else if (command == "ls") {
-            // ls function
+            list_directory_contents();
         } else if (command.substr(0, 4) == "cat ") {
             // cat function
         } else {

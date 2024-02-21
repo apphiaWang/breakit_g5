@@ -24,11 +24,10 @@ int main() {
         } else if (command == "ls") {
             list_directory_contents();
         } else if (command.substr(0, 4) == "cat ") {
-            // cat function
-        } else if (command.substr(0, 6) == "mkdir ") {
-            createDirectory(command);
             std::string filename = command.substr(4);
             cat_file(filename);
+        } else if (command.substr(0, 6) == "mkdir ") {
+            createDirectory(command);
         } else {
             std::cout << "Unknown command. Please try again." << std::endl;
         }

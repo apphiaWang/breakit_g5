@@ -5,7 +5,6 @@
 #include <filesystem>
 #include <unistd.h>
 #include <dirent.h>
-#include <sys/stat.h>
 #include <sstream>
 #include <fstream>
 #include <vector>
@@ -21,9 +20,6 @@ void list_directory_contents() {
     // For each entry in the directory
     struct dirent *entry;
 
-    // To store information about each entry
-    struct stat entry_stat;
-
     // Open the current directory
     dir = opendir(".");
     if (dir == nullptr) {
@@ -32,18 +28,16 @@ void list_directory_contents() {
     }
 
     while ((entry = readdir(dir)) != nullptr) {
-
-        // Use stat to get information about the entry
-        // Note: Using lstat instead of stat to correctly handle symbolic links
-        lstat(entry->d_name, &entry_stat);
-
         // Check if the entry is a directory or a file
-        if (S_ISDIR(entry_stat.st_mode)) {
+        if (entry->d_type == DT_DIR) {
             // It's a directory
             std::cout << "d -> " << entry->d_name << std::endl;
-        } else {
-            // It's a file
+        } else if (entry->d_type == DT_REG) {
+            // It's a regular file
             std::cout << "f -> " << entry->d_name << std::endl;
+        } else {
+            // For other types, you can either ignore or print a generic type
+            std::cout << "? -> " << entry->d_name << std::endl;
         }
     }
 

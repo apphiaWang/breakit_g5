@@ -54,7 +54,7 @@ void print_working_directory() {
     std::cout << "Current working directory: " << std::filesystem::current_path() << std::endl;
 }
 
-void create_directory(const std::string& input) {
+void create_directory(const std::string &input) {
     // Extract directory name from input
     std::string command = input.substr(input.find(" ") + 1);
 
@@ -65,7 +65,7 @@ void create_directory(const std::string& input) {
     }
 
     // Check if there are any invalid characters in the input for the directory name
-    for (char c : command) {
+    for (char c: command) {
         if (std::isspace(c) || c == '?' || c == ':' || c == '\\' || c == '*' || c == '/' || c == '"' || c == '|') {
             std::cout << "Invalid characters added to the directory filename, please re-enter" << std::endl;
             return;
@@ -83,7 +83,7 @@ void create_directory(const std::string& input) {
     std::cout << "Directory created successfully" << std::endl;
 }
 
-void cat_file(const std::string& filename) {
+void cat_file(const std::string &filename) {
     std::ifstream file(filename);
     if (file.is_open()) {
         std::string line;
@@ -97,7 +97,7 @@ void cat_file(const std::string& filename) {
 }
 
 // Utility function to split a string by delimiter into a vector of strings
-std::vector<std::string> split(const std::string& s, char delimiter) {
+std::vector<std::string> split(const std::string &s, char delimiter) {
     std::vector<std::string> tokens;
     std::string token;
     std::istringstream tokenStream(s);
@@ -110,12 +110,12 @@ std::vector<std::string> split(const std::string& s, char delimiter) {
 }
 
 // Check if a single directory component matches exactly in the given directory
-bool isExactComponentMatch(const fs::path& base, const std::string& component) {
+bool isExactComponentMatch(const fs::path &base, const std::string &component) {
     if (component == "." || component == ".." || component.empty()) {
         return true; // These are always considered valid
     }
 
-    for (const auto& entry : fs::directory_iterator(base)) {
+    for (const auto &entry: fs::directory_iterator(base)) {
         if (entry.is_directory() && entry.path().filename() == component) {
             return true; // Found an exact case-sensitive match
         }
@@ -123,7 +123,7 @@ bool isExactComponentMatch(const fs::path& base, const std::string& component) {
     return false; // No match found
 }
 
-void change_directory(const std::string& inputPath) {
+void change_directory(const std::string &inputPath) {
     if (inputPath.empty()) {
         std::cout << "Directory name not specified." << std::endl;
         return;
@@ -131,7 +131,7 @@ void change_directory(const std::string& inputPath) {
 
     // Special case for "cd /" to go to the user's home directory
     if (inputPath == "/") {
-        const char* home = getenv("HOME");
+        const char *home = getenv("HOME");
         if (home && chdir(home) == 0) {
             std::cout << "Moved to root directory." << std::endl;
             return;
@@ -148,7 +148,7 @@ void change_directory(const std::string& inputPath) {
     // Start from the root or current path based on the input
     newPath = isAbsolute ? fs::path("/") : fs::current_path();
 
-    for (const auto& component : components) {
+    for (const auto &component: components) {
         if (isExactComponentMatch(newPath, component)) {
             // Construct the new path incrementally to handle nested directories
             newPath /= component;

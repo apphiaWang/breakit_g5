@@ -19,28 +19,6 @@ private:
 
 protected:
     void changeDirectory(const std::string &dir){
-//        fs::path newPath;
-//        std::vector<std::string> components = split(dir, '/');
-//        bool isAbsolute = dir.front() == '/';
-//
-//        newPath = isAbsolute ? fs::path(getenv("HOME")) : fs::current_path(); // Adjust for root or current path
-//
-//        for (const auto &component : components) {
-//            auto nextPath = newPath / component;
-//            if (fs::exists(nextPath) && fs::is_directory(nextPath)) {
-//                newPath = nextPath;
-//            } else {
-//                std::cout << "Directory does not exist or case mismatch: " << component << std::endl;
-//                return;
-//            }
-//        }
-//
-//        if (chdir(newPath.c_str()) == 0) {
-//            std::cout << "Directory changed to " << newPath << std::endl;
-//        } else {
-//            std::cerr << "Failed to change directory to " << newPath << std::endl;
-//        }
-
         if(dir.empty()){
             std::cout<<"Directory name not specified. "<<std::endl;
             return;
@@ -312,20 +290,65 @@ public:
             std::cout << "User " << _username << " already exists." << std::endl;
         }
     }
+
     std::string getCurrentWorkingDirectory(){
-        return base_directory.string().erase(0,1) + ">";
+//        return base_directory.string().erase(0,1) + ">";
+        try {
+            // Canonicalize the base_directory to resolve any "..", ".", and symlinks
+            fs::path canonicalBase = fs::canonical(base_directory);
+
+            // Now, get the path relative to the root_directory
+            fs::path relativePath = fs::relative(canonicalBase, root_directory);
+
+            // Convert to string for display
+            std::string displayPath = relativePath.string();
+
+            // Check if the relativePath is just ".", indicating the root directory
+            if (displayPath == ".") {
+                displayPath = ""; // No need to show the dot for the root directory
+            } else {
+                // Prefix with '/' to maintain consistency in the display
+                displayPath = "/" + displayPath;
+            }
+
+            // Ensure the display path is correctly prefixed for your root structure
+            // and ensure it ends with ">", for your prompt display
+            return "/filesystem" + displayPath + ">";
+        } catch (const fs::filesystem_error& e) {
+            // Handle potential error (e.g., base_directory not existing)
+            std::cerr << "Error obtaining the current working directory: " << e.what() << std::endl;
+            return "error>";
+        }
+
+//        try {
+//            // Use the absolute path of the base_directory directly
+//            fs::path absoluteBase = fs::canonical(base_directory); // This resolves "..", ".", and symlinks
+//
+//            // Convert the absolute path to a string for manipulation
+//            std::string displayPath = absoluteBase.string();
+//
+//            // Ensure the display path does not contain the root_directory part for the display
+//            std::string rootPath = fs::canonical(root_directory).string();
+//            if(displayPath.rfind(rootPath, 0) == 0) {
+//                // Erase the root_directory part to just have the path relative to root_directory
+//                displayPath.erase(0, rootPath.length());
+//            }
+//
+//            // Handling edge case for root ("/") to ensure consistency
+//            if (displayPath.empty() || displayPath == "/") {
+//                displayPath = "/filesystem>";
+//            } else {
+//                // Ensure the display path starts correctly for your desired format
+//                displayPath = "/filesystem" + displayPath + ">";
+//            }
+//
+//            return displayPath;
+//        } catch (const fs::filesystem_error& e) {
+//            // Handle potential error (e.g., base_directory or root_directory not existing)
+//            std::cerr << "Error obtaining the current working directory: " << e.what() << std::endl;
+//            return "error>";
+//        }
     }
 };
 
 #endif //CMPT785_G5_SECURE_FILESYSTEM_FILESYSTEM_H
-
-
-/*
- * 1 - visibility, structure, location, root directory /
- *      cannot create files in root (shared, meta)
- *      cannot create directories in root /
- *
- *  3 - isAdmin logic in mkdir and mkfile as well (forbidden in users but allowed in self)
- *
- *
- */

@@ -4,7 +4,7 @@
 #include <iostream>
 #include <iomanip>
 
-void available_commands(bool adminStatus) {
+void availableCommands(bool adminStatus) {
 
     // Width for the command column
     int commandWidth = 40;

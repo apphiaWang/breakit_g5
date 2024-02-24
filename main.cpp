@@ -64,7 +64,7 @@ int main(int argc, char** argv) {
         // Rest of the code to interact with the file system
         std::cout << "Logged in as " + username<<std::endl;
         std::cout << std::endl;
-        available_commands(adminStatus);
+        availableCommands(adminStatus);
 
         std::string command;
         while(true) {

@@ -9,6 +9,7 @@
 #include "stringmanip.h"
 #include <unistd.h>
 #include <string>
+#include <sstream>
 
 class Filesystem {
 private:
@@ -18,6 +19,142 @@ private:
     std::filesystem::path root_directory;
 
 protected:
+
+    static bool deleteFile(const std::filesystem::path& filePath){
+        std::cout<<filePath<<std::endl;
+        bool result=std::filesystem::remove(filePath);
+        if(result){
+            std::cout<<"Shared files modifying...: "<<filePath<<std::endl;
+        }else{
+            std::cout<<"Failed to modify shared files"<<std::endl;
+        }
+        return result;
+    }
+
+//    static void fileShare(const std::string &sender, const std::string &filename, const std::string &receiver) {
+//        bool flag = false;
+//        std::string file = "./filesystem/" + sender + "/.metadata/shareFile.txt";
+//        if (std::filesystem::exists(file) && std::filesystem::is_regular_file(file)) {
+//            std::vector<std::string> contents = allReceivers(sender, filename);
+//            for (const std::string &rec: contents) {
+//                if (receiver == rec) {
+//                    flag = true;
+//                }
+//            }
+//            if (flag) {
+//                std::ifstream inputFile(file, std::ios::in);
+//                if (!inputFile.is_open()) {
+//                    std::cout << "Could not open shareFile.txt" << std::endl;
+//                } else {
+//                    std::string get_l;
+//                    while (std::getline(inputFile, get_l)) {
+//                        std::istringstream iss(get_l);
+//                        std::string s, f, r;
+//                        if (std::getline(iss, s, ',') && std::getline(iss, f, ',') && std::getline(iss, r, ',')) {
+//                            if (sender == s && filename == f && receiver == r) {
+//                                return;
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        } else {
+//            std::ofstream outputFile(file, std::ios::app | std::ios::out);
+//            if (!outputFile.is_open()) {
+//                std::cout << "Error: Could not open sharefile.txt" << std::endl;
+//                return;
+//            }
+//            std::cout << "We are inside the func" << std::endl;
+//            outputFile << sender << "," << filename << "," << receiver << std::endl;
+//            outputFile.close();
+//            return;
+//        }
+//    }
+
+    static void fileShare(const std::string &sender, const std::string &filename, const std::string &receiver) {
+        bool flag = false;
+        std::string file = "./filesystem/" + sender + "/.metadata/shareFile.txt";
+        std::vector<std::string> contents = allReceivers(sender, filename);
+
+        for (const std::string &rec: contents) {
+            if (receiver == rec) {
+                flag = true;
+                break; // Exit loop early if receiver is found
+            }
+        }
+
+        if (!flag) {
+            // Receiver not found, append to file
+            std::ofstream outputFile(file, std::ios::app | std::ios::out);
+            if (!outputFile.is_open()) {
+                std::cout << "Error: Could not open shareFile.txt" << std::endl;
+                return;
+            }
+            outputFile << sender << "," << filename << "," << receiver << std::endl;
+        } else {
+            // Receiver already present, no need to append
+            return;
+        }
+    }
+//    static void fileShare(const std::string &sender, const std::string &filename, const std::string &receiver) {
+//        bool entryExists = false;
+//        std::string file = "./filesystem/" + sender + "/.metadata/shareFile.txt";
+//
+//        // Open the metadata file to check existing entries
+//        std::ifstream inputFile(file);
+//        std::string line;
+//        while (std::getline(inputFile, line)) {
+//            std::istringstream iss(line);
+//            std::string s, f, r;
+//            if (std::getline(iss, s, ',') && std::getline(iss, f, ',') && std::getline(iss, r, ',')) {
+//                if (sender == s && filename == f && receiver == r) {
+//                    entryExists = true;
+//                    break; // Break the loop if an exact match is found
+//                }
+//            }
+//        }
+//        inputFile.close();
+//
+//        if (!entryExists) {
+//            // If the exact entry does not exist, append to the file
+//            std::ofstream outputFile(file, std::ios::app | std::ios::out);
+//            if (!outputFile.is_open()) {
+//                std::cout << "Error: Could not open shareFile.txt" << std::endl;
+//                return;
+//            }
+//            outputFile << sender << "," << filename << "," << receiver << std::endl;
+//        } else {
+//            // Entry exists, so don't append
+//            return;
+//        }
+//    }
+
+
+    static std::vector<std::string> allReceivers(const std::string &sender, const std::string &filename){
+        std::vector<std::string> receiverlist;
+        std::vector<std::string> contents= splittext(filename,'/');
+        std::string _filename=contents[contents.size()/contents[0].size()-1];
+        std::string file="./filesystem/"+sender+"/.metadata/shareFile.txt";
+        if(std::filesystem::exists(file)) {
+            std::ifstream inputFile(file);
+
+            if (!inputFile.is_open()) {
+                std::cout << "Could not open shareFile.txt" << std::endl;
+            }
+            std::string get_l;
+            while (std::getline(inputFile, get_l)) {
+                std::istringstream iss(get_l);
+                std::string s, f, r;
+                if (std::getline(iss, s, ',') && std::getline(iss, f, ',') && std::getline(iss, r, ',')) {
+                    if (sender == s && _filename == f) {
+                        receiverlist.push_back(r);
+                    }
+                }
+            }
+        }
+        return receiverlist;
+    }
+
     void changeDirectory(const std::string &dir){
         if(dir.empty()){
             std::cout<<"Directory name not specified. "<<std::endl;
@@ -34,11 +171,25 @@ protected:
         } else if (dir.front() == '/') {
             // Absolute path handling: navigate from root_directory
             newPath = root_directory / dir.substr(1);
-        } else {
+        } else if (dir == "../..") {
+            std::string workingdirectory=getCurrentWorkingDirectory();
+            workingdirectory.pop_back();
+            workingdirectory="."+workingdirectory;
+            if(std::filesystem::path(workingdirectory).parent_path() != root_directory) {
+                newPath = std::filesystem::path(workingdirectory).parent_path().parent_path();
+            } else {
+                std::cout << "Cannot go past root directory" << std::endl;
+                return;
+            }
+        }
+        else {
             // Relative path handling
             if(dir==".")
             {
                 newPath=base_directory;
+            } else if (dir == ".metadata") {
+                std::cout << "Metadata access forbidden" << std::endl;
+                return;
             }
             else{
                 newPath = base_directory / dir;
@@ -91,10 +242,9 @@ protected:
         std::istringstream iss(make_file);
         std::string command, filename, contents;
         bool flag= false;
+        std::vector<std::string> receivers;
 
-        flag = 0;
         iss >> command >> filename; // Read command and filename
-        std::cout << command << std::endl;
         std::getline(iss >> std::ws, contents); // Read contents, including whitespace
 
         // Trim leading and trailing whitespace from filename and contents
@@ -127,6 +277,7 @@ protected:
                 return;
             }
         }
+        std::vector<std::string> _arr= splittext(userPath,'/');
 
         // Check if contents are missing
         if (contents.empty()) {
@@ -137,9 +288,8 @@ protected:
         if (fs::exists(filename)) {
             std::cout << "The file '" << filename << "' already exists. It will be overwritten." << std::endl;
             flag = true;
+            receivers= allReceivers(_arr[2],filename);
         }
-
-        std::cout << filename << std::endl;
         // Create or open the file
         std::ofstream mkfile(filename);
 
@@ -154,7 +304,22 @@ protected:
         mkfile.close();
 
         // Output success message based on whether the file was created or modified
+        std::vector<std::string> _file= splittext(filename,'/');
+        std::string _filename=_file[_file.size()/_file[0].size()-1];
+        std::vector<std::string> workingdirectorycontents=splittext(workingdirectory,'/');
+        std::string sourceUserName=workingdirectorycontents[2];
+        std::string sharedPath=workingdirectory.substr(0,workingdirectory.length()-workingdirectorycontents[3].length())+"shared";
+
         if (flag) {
+            if(receivers.size()>0){
+                for(const std::string& str:receivers){
+                    if(fs::exists("./filesystem/"+str+"/shared/"+_filename) && fs::is_regular_file("./filesystem/"+str+"/shared/"+_filename)) {
+                        deleteFile("./filesystem/" + str + "/shared/" + _filename);
+                    }
+                    commandShareFile(filename,"./filesystem/"+sourceUserName+"/shared",_filename,str,sourceUserName);
+                }
+            }
+            //share the updated file
             std::cout << "File is modified successfully:  " << filename << std::endl;
         } else {
             std::cout << "File is created successfully: " << filename << std::endl;
@@ -207,15 +372,37 @@ protected:
         }
     }
 
-    static void shareFile(const std::filesystem::path &source, const std::filesystem::path& sharedPath ,const std::string &sourcefile, const std::string &_username){
-        std::filesystem::path destinationPath="./filesystem/"+_username+"/shared/" +sourcefile;
+    static void commandShareFile(const std::filesystem::path &source, const std::filesystem::path& sharedPath ,const std::string &sourcefile, const std::string &_username, const std::string &_source_username){
+        std::filesystem::path destinationPath="./filesystem/"+_username+"/shared/"+sourcefile;
         std::filesystem::path sharedDirectory=sharedPath/sourcefile;
+        size_t found=source.string().find("shared");
+        if(found!=std::string::npos){
+            std::cout<<"Cannot share files from the shared directory"<<std::endl;
+            return;
+        }
+        std::cout<<"Source Path: "<<source<<std::endl;
+        std::cout<<"Destination path: "<<destinationPath<<std::endl;
+        std::cout<<"Share Directory: "<<sharedDirectory<<std::endl;
+
+        std::cout<<"Source File: "<<sourcefile<<std::endl;
+        std::cout<<"Destination user: "<<_username<<std::endl;
+        std::cout<<"Source user name: "<<_source_username<<std::endl;
+
+
+
         try{
             std::filesystem::copy(source,destinationPath,std::filesystem::copy_options::overwrite_existing);
-            std::filesystem::copy(source,sharedDirectory,std::filesystem::copy_options::overwrite_existing);
-            std::filesystem::permissions(sharedDirectory, std::filesystem::perms::owner_read | std::filesystem::perms::group_read| std::filesystem::perms::others_read, std::filesystem::perm_options::replace);
             std::filesystem::permissions(destinationPath, std::filesystem::perms::owner_read | std::filesystem::perms::group_read| std::filesystem::perms::others_read, std::filesystem::perm_options::replace);
+            if(!std::filesystem::exists(sharedDirectory)){
+                std::filesystem::copy(source, sharedDirectory, std::filesystem::copy_options::overwrite_existing);
+                std::filesystem::permissions(sharedDirectory, std::filesystem::perms::owner_read | std::filesystem::perms::group_read| std::filesystem::perms::others_read, std::filesystem::perm_options::replace);
+            }else{
+                std::filesystem::remove_all(sharedDirectory);
+                std::filesystem::copy(source, sharedDirectory, std::filesystem::copy_options::overwrite_existing);
+                std::filesystem::permissions(sharedDirectory, std::filesystem::perms::owner_read | std::filesystem::perms::group_read| std::filesystem::perms::others_read, std::filesystem::perm_options::replace);
+            }
             std::cout<<"File has been copied to"<<destinationPath<<std::endl;
+            fileShare(_source_username,sourcefile,_username);
         }catch (const std::filesystem::filesystem_error &e){
             std::cout<<e.what()<<std::endl;
         }
@@ -245,15 +432,18 @@ public:
         }
         else if(command.substr(0,2)=="ls"){
             list_directory_contents((base_directory).c_str());
-        }
-        else if(command=="pwd"){
-            std::cout<<base_directory<<std::endl;
-        }else if(command.substr(0,8)=="adduser "){
+        } else if(command=="pwd") {
+            std::string workingdirectory=getCurrentWorkingDirectory();
+            workingdirectory.pop_back();
+            workingdirectory="."+workingdirectory;
+            std::cout<<workingdirectory<<std::endl;
+        } else if(command.substr(0,8)=="adduser "){
             if(isAdmin){
                 std::vector<std::string>str= splittext(command,' ');
                 std::string _username=str[1];
                 createFileSystem(_username,1);
                 addUser(_username);
+                //make_file();
             }else{
                 std::cout<<"Invalid Command"<<std::endl;
             }
@@ -293,7 +483,7 @@ public:
             }else{
                 for(const auto&entry : std::filesystem::directory_iterator(originDirectory)){
                     if(entry.is_regular_file() && entry.path().filename()==filename){
-                        shareFile(_arr[0],sharedPath,filename,_arr[1]);
+                        commandShareFile(_arr[0],sharedPath,filename,_arr[1],source[2]);
                     }
                 }
             }

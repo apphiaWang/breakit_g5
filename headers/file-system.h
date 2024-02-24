@@ -8,7 +8,7 @@
 #include "cryptography.h"
 #include "stringmanip.h"
 #include <unistd.h>
-
+#include <string>
 
 class Filesystem {
 private:
@@ -19,28 +19,6 @@ private:
 
 protected:
     void changeDirectory(const std::string &dir){
-//        fs::path newPath;
-//        std::vector<std::string> components = split(dir, '/');
-//        bool isAbsolute = dir.front() == '/';
-//
-//        newPath = isAbsolute ? fs::path(getenv("HOME")) : fs::current_path(); // Adjust for root or current path
-//
-//        for (const auto &component : components) {
-//            auto nextPath = newPath / component;
-//            if (fs::exists(nextPath) && fs::is_directory(nextPath)) {
-//                newPath = nextPath;
-//            } else {
-//                std::cout << "Directory does not exist or case mismatch: " << component << std::endl;
-//                return;
-//            }
-//        }
-//
-//        if (chdir(newPath.c_str()) == 0) {
-//            std::cout << "Directory changed to " << newPath << std::endl;
-//        } else {
-//            std::cerr << "Failed to change directory to " << newPath << std::endl;
-//        }
-
         if(dir.empty()){
             std::cout<<"Directory name not specified. "<<std::endl;
             return;
@@ -108,7 +86,7 @@ protected:
         closedir(dir);
     }
 
-    static void make_file(const std::string& make_file) {
+    void make_file(const std::string& make_file, const std::string &userPath) {
         // Extract filename and contents from input
         std::istringstream iss(make_file);
         std::string command, filename, contents;
@@ -116,6 +94,7 @@ protected:
 
         flag = 0;
         iss >> command >> filename; // Read command and filename
+        std::cout << command << std::endl;
         std::getline(iss >> std::ws, contents); // Read contents, including whitespace
 
         // Trim leading and trailing whitespace from filename and contents
@@ -136,9 +115,14 @@ protected:
             return;
         }
 
+        std::string workingdirectory=getCurrentWorkingDirectory();
+        workingdirectory.pop_back();
+        workingdirectory="."+workingdirectory;
+        filename = workingdirectory + "/" +  filename;
+
         // Check to see if any invalid characters exist in the filename
         for (char c : filename) {
-            if (std::isspace(c) || c == '?' || c == ':' || c == '\\' || c == '*' || c == '/' || c == '"' || c == '|') {
+            if (std::isspace(c) || c == '?' || c == ':' || c == '\\' || c == '*' || c == '"' || c == '|') {
                 std::cout << "Invalid characters added to the filename, please re-enter" << std::endl;
                 return;
             }
@@ -155,6 +139,7 @@ protected:
             flag = true;
         }
 
+        std::cout << filename << std::endl;
         // Create or open the file
         std::ofstream mkfile(filename);
 
@@ -176,9 +161,13 @@ protected:
         }
     }
 
-    static void create_directory(const std::string &input) {
+    static void create_directory(const std::string &input, const std::string &userPath) {
+
         // Extract directory name from input
         std::string command = input.substr(input.find(" ") + 1);
+        std::cout<< command <<std::endl;
+
+        std::string filePath=userPath + "/" + command;
 
         // Check if directory name is empty
         if (command.empty()) {
@@ -195,13 +184,13 @@ protected:
         }
 
         // Check if directory already exists
-        if (fs::exists(command)) {
+        if (fs::exists(filePath) && fs::is_directory(filePath)) {
             std::cout << "Directory already exists" << std::endl;
             return;
         }
 
         // Create directory
-        fs::create_directory(command);
+        std::filesystem::create_directories(filePath);
         std::cout << "Directory created successfully" << std::endl;
     }
 
@@ -234,9 +223,9 @@ protected:
 
 public:
     explicit Filesystem(const std::string &username, bool isAdmin=false, int count=0):username(username){
-        base_directory="./filesystem";
-        if(isAdmin) root_directory=base_directory;
-        else    root_directory=base_directory/username;
+        base_directory="./filesystem/"+username;
+        if(isAdmin) root_directory="./filesystem";
+        else    root_directory=base_directory;
         createFileSystem(username,count);
     }
 
@@ -250,7 +239,7 @@ public:
         std::filesystem::create_directories(base_directory/"shared");
     }
 
-    void processUserCommand(const std::string &command, bool isAdmin) {
+    void processUserCommand(const std::string &command, bool isAdmin, const std::string &user) {
         if(command.substr(0,3)=="cd "){
             changeDirectory(command.substr(3));
         }
@@ -269,14 +258,25 @@ public:
                 std::cout<<"Invalid Command"<<std::endl;
             }
         }else if (command.substr(0,6)=="mkdir " || command.substr(0,7)=="mkfile "){
-            if(isAdmin){
-                std::cout<<"Forbidden"<<std::endl;
-            }else{
-                if(command.substr(0, 6) == "mkdir ") {
-                    create_directory(command);
+            std::string userPath = "./filesystem/" + user + "/personal";
+            std::string workingdirectory=getCurrentWorkingDirectory();
+            workingdirectory.pop_back();
+            workingdirectory="."+workingdirectory;
+
+            if(command.substr(0, 6) == "mkdir ") {
+                if(strcmp(workingdirectory.c_str(),userPath.c_str()) == 0) {
+                    create_directory(command, userPath);
                 }
-                if(command.substr(0,7) == "mkfile ") {
-                    make_file(command);
+                else {
+                    std::cout << "Forbidden!" << std::endl;
+                }
+            }
+            if(command.substr(0,7) == "mkfile ") {
+                if(strcmp(workingdirectory.c_str(),userPath.c_str()) == 0) {
+                    make_file(command, userPath);
+                }
+                else {
+                    std::cout << "Forbidden!" << std::endl;
                 }
             }
         } else if (command.substr(0, 4) == "cat ") {
@@ -312,20 +312,24 @@ public:
             std::cout << "User " << _username << " already exists." << std::endl;
         }
     }
+
     std::string getCurrentWorkingDirectory(){
-        return base_directory.string().erase(0,1) + ">";
+            std::string result;
+
+            fs::path canonicalBase = fs::canonical(base_directory);
+            std::vector<std::string> currentPath = splittext(canonicalBase.c_str(),'/');
+
+            bool filesystemFound = false;
+            for (const auto& segment : currentPath) {
+                if (filesystemFound) {
+                    result += "/" + segment;
+                } else if (segment == "filesystem") {
+                    filesystemFound = true;
+                    result += "/" + segment;
+                }
+            }
+            return result + ">";
     }
 };
 
 #endif //CMPT785_G5_SECURE_FILESYSTEM_FILESYSTEM_H
-
-
-/*
- * 1 - visibility, structure, location, root directory /
- *      cannot create files in root (shared, meta)
- *      cannot create directories in root /
- *
- *  3 - isAdmin logic in mkdir and mkfile as well (forbidden in users but allowed in self)
- *
- *
- */

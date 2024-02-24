@@ -25,12 +25,12 @@ bool authenticateUser(const std::string &username){
     return false;
 }
 
-void processCommand(const std::string& command, Filesystem &fs, bool _isAdmin){
+void processCommand(const std::string& command, Filesystem &fs, bool _isAdmin, const std::string &username){
     if(command=="exit"){
         std::cout<<"Exiting..."<<std::endl;
         exit(1);
     }else{
-        fs.processUserCommand(command, _isAdmin);
+        fs.processUserCommand(command, _isAdmin, username);
     }
 }
 
@@ -70,7 +70,7 @@ int main(int argc, char** argv){
         while(true){
             std::cout<<username<<"@"<<fs.getCurrentWorkingDirectory();
             std::getline(std::cin,command);
-            processCommand(command, fs , adminStatus);
+            processCommand(command, fs , adminStatus, username);
         }
     }
 }

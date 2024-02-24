@@ -9,7 +9,6 @@ link_directories(${OPENSSL_LIBRARIES})
 
 add_executable(cmpt785_g5_secure_filesystem main.cpp
         headers/menu-commands.h
-        headers/execute-commands.h
         headers/cryptography.h
         headers/file-system.h
         headers/string-utilities.h

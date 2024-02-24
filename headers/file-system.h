@@ -21,7 +21,6 @@ private:
     std::filesystem::path root_directory;
 
 protected:
-
     static bool deleteFile(const std::filesystem::path& filePath) {
         std::cout << filePath << std::endl;
         bool result = std::filesystem::remove(filePath);
@@ -84,16 +83,16 @@ protected:
         return receiverlist;
     }
 
-    void changeDirectory(const std::string &dir){
-        if(dir.empty()){
-            std::cout<<"Directory name not specified. "<<std::endl;
+    void changeDirectory(const std::string &dir) {
+        if(dir.empty()) {
+            std::cout << "Directory name not specified." << std::endl;
             return;
         }
 
         std::filesystem::path newPath;
 
         if(dir=="..") {
-            if(base_directory!=root_directory) {
+            if(base_directory != root_directory) {
                 newPath = base_directory.parent_path();
             } else {
                 std::cout << "Already at the root directory. Cannot go up." << std::endl;

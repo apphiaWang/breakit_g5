@@ -17,7 +17,7 @@ bool authenticateUser(const std::string &username) {
     } else {
         std::string message = "Hello";
         std::string result;
-        if (decrypt_ciphertext(encrypt_plaintext(message, username), username) == message) {
+        if (decryptCipherText(encryptPlainText(message, username), username) == message) {
             return true;
         }
     }

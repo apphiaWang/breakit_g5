@@ -241,14 +241,14 @@ public:
     }
 
     void createFileSystem(const std::string &_username, int count=0){
-            base_directory="./filesystem/"+_username;
-            if(count==1) {
-                std::filesystem::create_directories(base_directory/".metadata/private_keys");
-                //chmod((base_directory / "metadata/private_keys").c_str(), S_IRWXU);
-            }
-            std::filesystem::create_directories(base_directory/"personal");
-            std::filesystem::create_directories(base_directory/"shared");
+        base_directory="./filesystem/"+_username;
+        if(count==1) {
+            std::filesystem::create_directories(base_directory/".metadata/private_keys");
+            //chmod((base_directory / "metadata/private_keys").c_str(), S_IRWXU);
         }
+        std::filesystem::create_directories(base_directory/"personal");
+        std::filesystem::create_directories(base_directory/"shared");
+    }
 
     void processUserCommand(const std::string &command, bool isAdmin) {
         if(command.substr(0,3)=="cd "){
@@ -272,12 +272,12 @@ public:
             if(isAdmin){
                 std::cout<<"Forbidden"<<std::endl;
             }else{
-              if(command.substr(0, 6) == "mkdir ") {
-                  create_directory(command);
-              }
-              if(command.substr(0,7) == "mkfile ") {
-                  make_file(command);
-              }
+                if(command.substr(0, 6) == "mkdir ") {
+                    create_directory(command);
+                }
+                if(command.substr(0,7) == "mkfile ") {
+                    make_file(command);
+                }
             }
         } else if (command.substr(0, 4) == "cat ") {
             std::string filename = command.substr(4);

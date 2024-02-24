@@ -4,7 +4,7 @@
 #include "headers/execute-commands.h"
 #include "headers/file-system.h"
 #include "headers/cryptography.h"
-#include "headers/stringmanip.h"
+#include "headers/string-utilities.h"
 
 void initializeFileSystem() {
     std::filesystem::create_directories("public_keys");

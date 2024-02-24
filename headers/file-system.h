@@ -6,7 +6,7 @@
 #include <fstream>
 #include <unordered_map>
 #include "cryptography.h"
-#include "stringmanip.h"
+#include "string-utilities.h"
 #include <unistd.h>
 #include <string>
 #include <sstream>

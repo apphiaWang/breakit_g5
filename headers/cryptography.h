@@ -18,7 +18,7 @@
 #define PUB_KEY_LOC "public_keys/"
 #endif
 
-bool create_user_key(const std::string &username, bool isAdmin) {
+bool createUserKey(const std::string &username, bool isAdmin) {
     bool ret = 0;
     int bits = 4096;
     RSA *rsa = nullptr;
@@ -47,6 +47,7 @@ bool create_user_key(const std::string &username, bool isAdmin) {
         BN_free(bne);
         return false;
     }
+
     bp_private = BIO_new_file(("./filesystem/" + username + std::string(PRIV_KEY_LOC) + username + "_priv.pem").c_str(), "w+");
     if (!PEM_write_bio_RSAPrivateKey(bp_private, rsa, nullptr, nullptr, 0, nullptr, nullptr)) {
         BIO_free_all(bp_private);
@@ -54,6 +55,7 @@ bool create_user_key(const std::string &username, bool isAdmin) {
         BN_free(bne);
         return false;
     }
+
     std::filesystem::permissions(("./filesystem/" + username + std::string(PRIV_KEY_LOC) + username + "_priv.pem").c_str(), std::filesystem::perms::owner_read | std::filesystem::perms::group_read| std::filesystem::perms::others_read, std::filesystem::perm_options::replace);
 
     BIO_free(bp_public);
@@ -65,7 +67,7 @@ bool create_user_key(const std::string &username, bool isAdmin) {
     return true;
 }
 
-std::string encrypt_plaintext(const std::string &plaintext, const std::string &username) {
+std::string encryptPlainText(const std::string &plaintext, const std::string &username) {
     const int bits = 4096;
     const int max_length = bits / 8 - 42; // Adjusted for RSA_PKCS1_OAEP_PADDING
     if (plaintext.empty() || plaintext.length() > max_length) {
@@ -112,7 +114,7 @@ std::string encrypt_plaintext(const std::string &plaintext, const std::string &u
     return {reinterpret_cast<char *>(encryptedData.data()), static_cast<size_t>(result)};
 }
 
-std::string decrypt_ciphertext(std::string ciphertext, const std::string &username) {
+std::string decryptCipherText(std::string ciphertext, const std::string &username) {
     if (ciphertext.empty()) {
         std::cerr << "Ciphertext is empty" << std::endl;
     }

@@ -1,11 +1,11 @@
-#ifndef CMPT785_G5_SECURE_FILESYSTEM_STRINGMANIP_H
-#define CMPT785_G5_SECURE_FILESYSTEM_STRINGMANIP_H
+#ifndef CMPT785_G5_SECURE_FILESYSTEM_STRING_UTILITIES_H
+#define CMPT785_G5_SECURE_FILESYSTEM_STRING_UTILITIES_H
 
 #include <iostream>
 #include <vector>
 #include <sstream>
 
-std::vector<std::string> splittext(const std::string &s, char delimiter) {
+std::vector<std::string> splitText(const std::string &s, char delimiter) {
     std::vector<std::string> result;
     std::stringstream ss(s);
     std::string item;
@@ -16,4 +16,4 @@ std::vector<std::string> splittext(const std::string &s, char delimiter) {
     return result;
 }
 
-#endif //CMPT785_G5_SECURE_FILESYSTEM_STRINGMANIP_H
+#endif //CMPT785_G5_SECURE_FILESYSTEM_STRING_UTILITIES_H

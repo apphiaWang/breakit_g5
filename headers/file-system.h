@@ -7,7 +7,6 @@
 #include <unordered_map>
 #include "cryptography.h"
 #include "stringmanip.h"
-#include <sys/stat.h>
 #include <unistd.h>
 
 
@@ -16,57 +15,67 @@ private:
     std::unordered_map<std::string, std::filesystem::path> user_keyfiles;
     std::string username;
     std::filesystem::path base_directory;
+    std::filesystem::path root_directory;
 
 protected:
     void changeDirectory(const std::string &dir){
-
-        if (dir.empty()) {
-            std::cout << "Directory name not specified." << std::endl;
-            return;
-        }
-
-//        if(dir=="personal" ||  dir=="shared" || dir=="sami"){
-//            base_directory/=dir;
-//            std::cout<<"Changed directory to "<<dir<<std::endl;
-//        }else{
-//            std::cout<<"Invalid Command"<<std::endl;
+//        fs::path newPath;
+//        std::vector<std::string> components = split(dir, '/');
+//        bool isAbsolute = dir.front() == '/';
+//
+//        newPath = isAbsolute ? fs::path(getenv("HOME")) : fs::current_path(); // Adjust for root or current path
+//
+//        for (const auto &component : components) {
+//            auto nextPath = newPath / component;
+//            if (fs::exists(nextPath) && fs::is_directory(nextPath)) {
+//                newPath = nextPath;
+//            } else {
+//                std::cout << "Directory does not exist or case mismatch: " << component << std::endl;
+//                return;
+//            }
+//        }
+//
+//        if (chdir(newPath.c_str()) == 0) {
+//            std::cout << "Directory changed to " << newPath << std::endl;
+//        } else {
+//            std::cerr << "Failed to change directory to " << newPath << std::endl;
 //        }
 
-        if (dir == "/") {
-            const char *home = getenv("HOME");
-            if (home && chdir(home) == 0) {
-                std::cout << "Moved to home directory." << std::endl;
-                return;
-            } else {
-                std::cerr << "Failed to move to home directory." << std::endl;
-                return;
-            }
+        if(dir.empty()){
+            std::cout<<"Directory name not specified. "<<std::endl;
+            return;
         }
-
         fs::path newPath;
-        std::vector<std::string> components = split(dir, '/');
-        bool isAbsolute = dir.front() == '/';
-
-        newPath = isAbsolute ? fs::path(getenv("HOME")) : fs::current_path(); // Adjust for root or current path
-
-        for (const auto &component : components) {
-            auto nextPath = newPath / component;
-            if (fs::exists(nextPath) && fs::is_directory(nextPath)) {
-                newPath = nextPath;
+        if(dir==".."){
+            if(base_directory!=root_directory){
+                newPath = base_directory.parent_path();
             } else {
-                std::cout << "Directory does not exist or case mismatch: " << component << std::endl;
+                std::cout << "Already at the root directory. Cannot go up." << std::endl;
                 return;
+            }
+        } else if (dir.front() == '/') {
+            // Absolute path handling: navigate from root_directory
+            newPath = root_directory / dir.substr(1);
+        } else {
+            // Relative path handling
+            if(dir==".")
+            {
+                newPath=base_directory;
+            }
+            else{
+                newPath = base_directory / dir;
             }
         }
 
-        if (chdir(newPath.c_str()) == 0) {
-            std::cout << "Directory changed to " << newPath << std::endl;
+        // Check if newPath is valid and within root_directory bounds
+        if (fs::exists(newPath) && fs::is_directory(newPath) && (newPath.string().rfind(root_directory.string(), 0) == 0)) {
+            base_directory = newPath;
         } else {
-            std::cerr << "Failed to change directory to " << newPath << std::endl;
+            std::cout << "Directory does not exist or is not accessible: " << dir << std::endl;
         }
     }
 
-    void list_directory_contents(const char *directory) {
+    static void list_directory_contents(const char *directory) {
 
         // Pointer to directory
         DIR *dir;
@@ -77,7 +86,7 @@ protected:
         // Open the current directory
         dir = opendir(directory);
         if (dir == nullptr) {
-            std::cerr << "Error opening directory" << std::endl;
+            std::cout << "Error opening directory" << std::endl;
             return;
         }
 
@@ -99,7 +108,7 @@ protected:
         closedir(dir);
     }
 
-    void make_file(const std::string& make_file) {
+    static void make_file(const std::string& make_file) {
         // Extract filename and contents from input
         std::istringstream iss(make_file);
         std::string command, filename, contents;
@@ -151,7 +160,7 @@ protected:
 
         // Check if file is opened successfully
         if (!mkfile.is_open()) {
-            std::cerr << "Unable to open the specified file" << std::endl;
+            std::cout << "Unable to open the specified file" << std::endl;
             return;
         }
 
@@ -167,7 +176,7 @@ protected:
         }
     }
 
-    void create_directory(const std::string &input) {
+    static void create_directory(const std::string &input) {
         // Extract directory name from input
         std::string command = input.substr(input.find(" ") + 1);
 
@@ -196,7 +205,7 @@ protected:
         std::cout << "Directory created successfully" << std::endl;
     }
 
-    void cat_file(const std::string &filename) {
+    static void cat_file(const std::string &filename) {
         std::ifstream file(filename);
         if (file.is_open()) {
             std::string line;
@@ -205,34 +214,41 @@ protected:
             }
             file.close();
         } else {
-            std::cerr << "Unable to open file: " << filename << std::endl;
+            std::cout << "Unable to open file: " << filename << std::endl;
         }
     }
+
+    static void shareFile(const std::filesystem::path &source, const std::filesystem::path& sharedPath ,const std::string &sourcefile, const std::string &_username){
+        std::filesystem::path destinationPath="./filesystem/"+_username+"/shared/" +sourcefile;
+        std::filesystem::path sharedDirectory=sharedPath/sourcefile;
+        try{
+            std::filesystem::copy(source,destinationPath,std::filesystem::copy_options::overwrite_existing);
+            std::filesystem::copy(source,sharedDirectory,std::filesystem::copy_options::overwrite_existing);
+            std::filesystem::permissions(sharedDirectory, std::filesystem::perms::owner_read | std::filesystem::perms::group_read| std::filesystem::perms::others_read, std::filesystem::perm_options::replace);
+            std::filesystem::permissions(destinationPath, std::filesystem::perms::owner_read | std::filesystem::perms::group_read| std::filesystem::perms::others_read, std::filesystem::perm_options::replace);
+            std::cout<<"File has been copied to"<<destinationPath<<std::endl;
+        }catch (const std::filesystem::filesystem_error &e){
+            std::cout<<e.what()<<std::endl;
+        }
+    };
 
 public:
-    explicit Filesystem(const std::string &username,bool isAdmin=false, int count=0):username(username){
-        createFileSystem(username,isAdmin,count);
+    explicit Filesystem(const std::string &username, bool isAdmin=false, int count=0):username(username){
+        base_directory="./filesystem";
+        if(isAdmin) root_directory=base_directory;
+        else    root_directory=base_directory/username;
+        createFileSystem(username,count);
     }
 
-    void createFileSystem(const std::string &_username, bool isAdmin=false, int count=0){
-        if(isAdmin){
-            base_directory=std::filesystem::current_path()/"filesystem";
+    void createFileSystem(const std::string &_username, int count=0){
+            base_directory="./filesystem/"+_username;
             if(count==1) {
-                std::filesystem::create_directories(base_directory / "metadata/private_keys");
-                chmod((base_directory / "metadata/private_keys").c_str(), S_IRWXU);
-            }
-            std::filesystem::create_directories(base_directory/"personal");
-            std::filesystem::create_directories(base_directory/"shared");
-        }else{
-            base_directory=std::filesystem::current_path()/"filesystem"/_username;
-            if(count==1) {
-                std::filesystem::create_directories(base_directory / "metadata/private_keys");
-                chmod((base_directory / "metadata/private_keys").c_str(), S_IRWXU);
+                std::filesystem::create_directories(base_directory/".metadata/private_keys");
+                //chmod((base_directory / "metadata/private_keys").c_str(), S_IRWXU);
             }
             std::filesystem::create_directories(base_directory/"personal");
             std::filesystem::create_directories(base_directory/"shared");
         }
-    }
 
     void processUserCommand(const std::string &command, bool isAdmin) {
         if(command.substr(0,3)=="cd "){
@@ -247,7 +263,7 @@ public:
             if(isAdmin){
                 std::vector<std::string>str= splittext(command,' ');
                 std::string _username=str[1];
-                createFileSystem(_username, false,1);
+                createFileSystem(_username,1);
                 addUser(_username);
             }else{
                 std::cout<<"Invalid Command"<<std::endl;
@@ -266,7 +282,22 @@ public:
         } else if (command.substr(0, 4) == "cat ") {
             std::string filename = command.substr(4);
             cat_file(filename);
-        } else{
+        } else if (command.substr(0,6)=="share "){
+            std::vector _arr= splittext(command.substr(6),' ');
+            std::vector source= splittext(_arr[0],'/'); //SourcePath - Assuming the path is ./filesystem/<user>/personal/<file.ext>
+            std::string filename=source[source.size()/source[0].size()-1];
+            std::string sharedPath="./"+source[1]+"/"+source[2]+"/shared";
+            std::string originDirectory=_arr[0].substr(0,_arr[0].length()-filename.length());//Path is ./filesystem/<user>/personal/
+            if(!std::filesystem::exists(originDirectory) || !std::filesystem::is_directory(originDirectory)){
+                std::cout<<"Provided path is not a valid directory. "<<std::endl;
+            }else{
+                for(const auto&entry : std::filesystem::directory_iterator(originDirectory)){
+                    if(entry.is_regular_file() && entry.path().filename()==filename){
+                        shareFile(_arr[0],sharedPath,filename,_arr[1]);
+                    }
+                }
+            }
+        }else{
             std::cout<<"Invalid Command"<<std::endl;
         }
     }
@@ -281,6 +312,9 @@ public:
             std::cout << "User " << _username << " already exists." << std::endl;
         }
     }
+    std::string getCurrentWorkingDirectory(){
+        return base_directory.string().erase(0,1) + ">";
+    }
 };
 
 #endif //CMPT785_G5_SECURE_FILESYSTEM_FILESYSTEM_H
@@ -290,16 +324,8 @@ public:
  * 1 - visibility, structure, location, root directory /
  *      cannot create files in root (shared, meta)
  *      cannot create directories in root /
- * filesystem
- *      admin /
- *          meta
- *          personal
- *          shared
- *      u1 /
- *          meta
- *          personal
- *          shared
- * 2
- *  functions (cd, ls, pwd)
+ *
+ *  3 - isAdmin logic in mkdir and mkfile as well (forbidden in users but allowed in self)
+ *
  *
  */

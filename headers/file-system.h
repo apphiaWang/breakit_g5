@@ -8,7 +8,7 @@
 #include "cryptography.h"
 #include "stringmanip.h"
 #include <unistd.h>
-
+#include <string>
 
 class Filesystem {
 private:
@@ -86,7 +86,7 @@ protected:
         closedir(dir);
     }
 
-    static void make_file(const std::string& make_file) {
+    void make_file(const std::string& make_file, const std::string &userPath) {
         // Extract filename and contents from input
         std::istringstream iss(make_file);
         std::string command, filename, contents;
@@ -94,6 +94,7 @@ protected:
 
         flag = 0;
         iss >> command >> filename; // Read command and filename
+        std::cout << command << std::endl;
         std::getline(iss >> std::ws, contents); // Read contents, including whitespace
 
         // Trim leading and trailing whitespace from filename and contents
@@ -114,9 +115,14 @@ protected:
             return;
         }
 
+        std::string workingdirectory=getCurrentWorkingDirectory();
+        workingdirectory.pop_back();
+        workingdirectory="."+workingdirectory;
+        filename = workingdirectory + "/" +  filename;
+
         // Check to see if any invalid characters exist in the filename
         for (char c : filename) {
-            if (std::isspace(c) || c == '?' || c == ':' || c == '\\' || c == '*' || c == '/' || c == '"' || c == '|') {
+            if (std::isspace(c) || c == '?' || c == ':' || c == '\\' || c == '*' || c == '"' || c == '|') {
                 std::cout << "Invalid characters added to the filename, please re-enter" << std::endl;
                 return;
             }
@@ -133,6 +139,7 @@ protected:
             flag = true;
         }
 
+        std::cout << filename << std::endl;
         // Create or open the file
         std::ofstream mkfile(filename);
 
@@ -154,9 +161,13 @@ protected:
         }
     }
 
-    static void create_directory(const std::string &input) {
+    static void create_directory(const std::string &input, const std::string &userPath) {
+
         // Extract directory name from input
         std::string command = input.substr(input.find(" ") + 1);
+        std::cout<< command <<std::endl;
+
+        std::string filePath=userPath + "/" + command;
 
         // Check if directory name is empty
         if (command.empty()) {
@@ -173,13 +184,13 @@ protected:
         }
 
         // Check if directory already exists
-        if (fs::exists(command)) {
+        if (fs::exists(filePath) && fs::is_directory(filePath)) {
             std::cout << "Directory already exists" << std::endl;
             return;
         }
 
         // Create directory
-        fs::create_directory(command);
+        std::filesystem::create_directories(filePath);
         std::cout << "Directory created successfully" << std::endl;
     }
 
@@ -212,9 +223,9 @@ protected:
 
 public:
     explicit Filesystem(const std::string &username, bool isAdmin=false, int count=0):username(username){
-        base_directory="./filesystem";
-        if(isAdmin) root_directory=base_directory;
-        else    root_directory=base_directory/username;
+        base_directory="./filesystem/"+username;
+        if(isAdmin) root_directory="./filesystem";
+        else    root_directory=base_directory;
         createFileSystem(username,count);
     }
 
@@ -228,7 +239,7 @@ public:
         std::filesystem::create_directories(base_directory/"shared");
     }
 
-    void processUserCommand(const std::string &command, bool isAdmin) {
+    void processUserCommand(const std::string &command, bool isAdmin, const std::string &user) {
         if(command.substr(0,3)=="cd "){
             changeDirectory(command.substr(3));
         }
@@ -247,14 +258,25 @@ public:
                 std::cout<<"Invalid Command"<<std::endl;
             }
         }else if (command.substr(0,6)=="mkdir " || command.substr(0,7)=="mkfile "){
-            if(isAdmin){
-                std::cout<<"Forbidden"<<std::endl;
-            }else{
-                if(command.substr(0, 6) == "mkdir ") {
-                    create_directory(command);
+            std::string userPath = "./filesystem/" + user + "/personal";
+            std::string workingdirectory=getCurrentWorkingDirectory();
+            workingdirectory.pop_back();
+            workingdirectory="."+workingdirectory;
+
+            if(command.substr(0, 6) == "mkdir ") {
+                if(strcmp(workingdirectory.c_str(),userPath.c_str()) == 0) {
+                    create_directory(command, userPath);
                 }
-                if(command.substr(0,7) == "mkfile ") {
-                    make_file(command);
+                else {
+                    std::cout << "Forbidden!" << std::endl;
+                }
+            }
+            if(command.substr(0,7) == "mkfile ") {
+                if(strcmp(workingdirectory.c_str(),userPath.c_str()) == 0) {
+                    make_file(command, userPath);
+                }
+                else {
+                    std::cout << "Forbidden!" << std::endl;
                 }
             }
         } else if (command.substr(0, 4) == "cat ") {
@@ -292,62 +314,21 @@ public:
     }
 
     std::string getCurrentWorkingDirectory(){
-//        return base_directory.string().erase(0,1) + ">";
-        try {
-            // Canonicalize the base_directory to resolve any "..", ".", and symlinks
+            std::string result;
+
             fs::path canonicalBase = fs::canonical(base_directory);
+            std::vector<std::string> currentPath = splittext(canonicalBase.c_str(),'/');
 
-            // Now, get the path relative to the root_directory
-            fs::path relativePath = fs::relative(canonicalBase, root_directory);
-
-            // Convert to string for display
-            std::string displayPath = relativePath.string();
-
-            // Check if the relativePath is just ".", indicating the root directory
-            if (displayPath == ".") {
-                displayPath = ""; // No need to show the dot for the root directory
-            } else {
-                // Prefix with '/' to maintain consistency in the display
-                displayPath = "/" + displayPath;
+            bool filesystemFound = false;
+            for (const auto& segment : currentPath) {
+                if (filesystemFound) {
+                    result += "/" + segment;
+                } else if (segment == "filesystem") {
+                    filesystemFound = true;
+                    result += "/" + segment;
+                }
             }
-
-            // Ensure the display path is correctly prefixed for your root structure
-            // and ensure it ends with ">", for your prompt display
-            return "/filesystem" + displayPath + ">";
-        } catch (const fs::filesystem_error& e) {
-            // Handle potential error (e.g., base_directory not existing)
-            std::cerr << "Error obtaining the current working directory: " << e.what() << std::endl;
-            return "error>";
-        }
-
-//        try {
-//            // Use the absolute path of the base_directory directly
-//            fs::path absoluteBase = fs::canonical(base_directory); // This resolves "..", ".", and symlinks
-//
-//            // Convert the absolute path to a string for manipulation
-//            std::string displayPath = absoluteBase.string();
-//
-//            // Ensure the display path does not contain the root_directory part for the display
-//            std::string rootPath = fs::canonical(root_directory).string();
-//            if(displayPath.rfind(rootPath, 0) == 0) {
-//                // Erase the root_directory part to just have the path relative to root_directory
-//                displayPath.erase(0, rootPath.length());
-//            }
-//
-//            // Handling edge case for root ("/") to ensure consistency
-//            if (displayPath.empty() || displayPath == "/") {
-//                displayPath = "/filesystem>";
-//            } else {
-//                // Ensure the display path starts correctly for your desired format
-//                displayPath = "/filesystem" + displayPath + ">";
-//            }
-//
-//            return displayPath;
-//        } catch (const fs::filesystem_error& e) {
-//            // Handle potential error (e.g., base_directory or root_directory not existing)
-//            std::cerr << "Error obtaining the current working directory: " << e.what() << std::endl;
-//            return "error>";
-//        }
+            return result + ">";
     }
 };
 

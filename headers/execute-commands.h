@@ -12,7 +12,7 @@
 // Create a namespace alias for convenience
 namespace fs = std::filesystem;
 
-void list_directory_contents() {
+void list_directory_contents(const char *directory) {
 
     // Pointer to directory
     DIR *dir;
@@ -21,7 +21,7 @@ void list_directory_contents() {
     struct dirent *entry;
 
     // Open the current directory
-    dir = opendir(".");
+    dir = opendir(directory);
     if (dir == nullptr) {
         std::cerr << "Error opening directory" << std::endl;
         return;

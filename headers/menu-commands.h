@@ -4,7 +4,7 @@
 #include <iostream>
 #include <iomanip>
 
-void available_commands() {
+void available_commands(bool adminStatus) {
 
     // Width for the command column
     int commandWidth = 40;
@@ -24,7 +24,9 @@ void available_commands() {
     std::cout << std::setw(commandWidth) << std::left << "mkdir <directory>" << std::setw(descriptionWidth) << std::left << "Create a new directory" << std::endl;
     std::cout << std::setw(commandWidth) << std::left << "mkfile <filename> <contents>" << std::setw(descriptionWidth) << std::left << "Create a new file <filename> with the ascii printable contents <contents>" << std::endl;
 
-    std::cout << std::setw(commandWidth) << std::left << "adduser <username>" << std::setw(descriptionWidth) << std::left << "Add new user by the given <username>" << std::endl;
+    if(adminStatus) {
+        std::cout << std::setw(commandWidth) << std::left << "adduser <username>" << std::setw(descriptionWidth) << std::left << "Add new user by the given <username>" << std::endl;
+    }
     std::cout << std::setw(commandWidth) << std::left << "exit" << std::setw(descriptionWidth) << std::left << "Terminate the program" << std::endl;
 }
 

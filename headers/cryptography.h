@@ -11,11 +11,7 @@
 #include <iomanip>
 
 #ifndef PRIV_KEY_LOC
-<<<<<<< HEAD
 #define PRIV_KEY_LOC "/.metadata/private_keys/"
-=======
-#define PRIV_KEY_LOC "/metadata/private_keys/"
->>>>>>> 8e5de31 (Added implementation of terminal)
 #endif
 
 #ifndef PUB_KEY_LOC
@@ -51,25 +47,14 @@ bool create_user_key(const std::string &username, bool isAdmin) {
         BN_free(bne);
         return false;
     }
-<<<<<<< HEAD
     bp_private = BIO_new_file(("./filesystem/" + username + std::string(PRIV_KEY_LOC) + username + "_priv.pem").c_str(), "w+");
-=======
-    if(isAdmin){
-        bp_private = BIO_new_file(("filesystem/" + std::string(PRIV_KEY_LOC) + username + "_priv.pem").c_str(), "w+");
-    }else{
-        bp_private = BIO_new_file(("filesystem/" + username + std::string(PRIV_KEY_LOC) + username + "_priv.pem").c_str(), "w+");
-    }
->>>>>>> 8e5de31 (Added implementation of terminal)
     if (!PEM_write_bio_RSAPrivateKey(bp_private, rsa, nullptr, nullptr, 0, nullptr, nullptr)) {
         BIO_free_all(bp_private);
         RSA_free(rsa);
         BN_free(bne);
         return false;
     }
-<<<<<<< HEAD
     std::filesystem::permissions(("./filesystem/" + username + std::string(PRIV_KEY_LOC) + username + "_priv.pem").c_str(), std::filesystem::perms::owner_read | std::filesystem::perms::group_read| std::filesystem::perms::others_read, std::filesystem::perm_options::replace);
-=======
->>>>>>> 8e5de31 (Added implementation of terminal)
 
     BIO_free(bp_public);
     BIO_free(bp_private);
@@ -124,27 +109,17 @@ std::string encrypt_plaintext(const std::string &plaintext, const std::string &u
     }
 
     // Return the encrypted data as a string
-<<<<<<< HEAD
     return {reinterpret_cast<char *>(encryptedData.data()), static_cast<size_t>(result)};
-=======
-    return std::string(reinterpret_cast<char *>(encryptedData.data()), result);
->>>>>>> 8e5de31 (Added implementation of terminal)
 }
 
 std::string decrypt_ciphertext(std::string ciphertext, const std::string &username) {
     if (ciphertext.empty()) {
         std::cerr << "Ciphertext is empty" << std::endl;
     }
-<<<<<<< HEAD
     BIO *privateKeyFile = BIO_new_file(("./filesystem/" + username + std::string (PRIV_KEY_LOC) + username + "_priv.pem").c_str(), "r");
     if(!privateKeyFile){
         BIO_free_all(privateKeyFile);
         ERR_print_errors_fp(stderr);
-=======
-    BIO *privateKeyFile = BIO_new_file((location).c_str(), "r");
-    if(!privateKeyFile){
-        BIO_free(privateKeyFile);
->>>>>>> 8e5de31 (Added implementation of terminal)
         return "";
     }
     RSA *rsaPrivKey = PEM_read_bio_RSAPrivateKey(privateKeyFile, nullptr, nullptr, nullptr);

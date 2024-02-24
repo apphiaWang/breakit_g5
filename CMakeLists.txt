@@ -13,6 +13,7 @@ add_executable(cmpt785_g5_secure_filesystem main.cpp
         headers/cryptography.h
         headers/file-system.h
         headers/stringmanip.h
+        headers/stringmanip.h
 )
 
 target_link_libraries(cmpt785_g5_secure_filesystem ${OPENSSL_LIBRARIES})

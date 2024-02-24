@@ -1,39 +1,76 @@
 #include <iostream>
+#include <vector>
 #include "headers/menu-commands.h"
 #include "headers/execute-commands.h"
+#include "headers/file-system.h"
+#include "headers/cryptography.h"
+#include "headers/stringmanip.h"
 
-int main() {
-    std::cout << "Hello, World!" << std::endl;
-    std::string command;
-    bool shouldExit = false;
+void initializeFileSystem(){
+    std::filesystem::create_directories("public_keys");
+    std::filesystem::create_directories("filesystem/");
+}
 
-    // Authentication function
-    available_commands();
-
-    while (!shouldExit) {
-        std::cout << "\nEnter command: ";
-        std::getline(std::cin, command);
-
-        if (command == "exit") {
-            // terminate function
-            shouldExit = true;
-        } else if (command.substr(0, 3) == "cd ") {
-            std::string dir = command.substr(3);
-            change_directory(dir);
-        } else if (command == "pwd") {
-            print_working_directory();
-        } else if (command == "ls") {
-            list_directory_contents();
-        } else if (command.substr(0, 4) == "cat ") {
-            std::string filename = command.substr(4);
-            cat_file(filename);
-        } else if (command.substr(0, 7) == "mkfile ") {
-            make_file(command);
-        } else if (command.substr(0, 6) == "mkdir ") {
-            create_directory(command);
-        } else {
-            std::cout << "Unknown command. Please try again." << std::endl;
+bool authenticateUser(const std::string &username){
+    std::string publicKeyPath="public_keys/" + username + "_pub.pem";
+    if (!std::filesystem::exists(publicKeyPath)){
+        return false;
+    }else {
+        std::string message = "Hello";
+        std::string result;
+        if (decrypt_ciphertext(encrypt_plaintext(message, username), username) == message) {
+            return true;
         }
     }
-    return 0;
+    return false;
+}
+
+void processCommand(const std::string& command, Filesystem &fs, bool _isAdmin){
+    if(command=="exit"){
+        std::cout<<"Exiting..."<<std::endl;
+        exit(1);
+    }else{
+        fs.processUserCommand(command, _isAdmin);
+    }
+}
+
+bool isAdmin(const std::string& username) {
+    return username.find("admin") != std::string::npos;
+}
+
+int main(int argc, char** argv){
+    if(argc!=2){
+        std::cerr<<"Usage: ./fileserver <username_keyfile>"<<std::endl;
+        return 1;
+    }
+
+    std::string username_keyfile=argv[1];
+    std::string username= splittext(username_keyfile,'_')[0];
+    bool adminStatus = isAdmin(username);
+
+    initializeFileSystem();
+
+    if(!authenticateUser(username)){
+        if(adminStatus){
+            Filesystem fs(username,adminStatus,1);
+            Filesystem::addUser(username,adminStatus);
+        }else{
+            std::cerr<<"Authentication failed"<<std::endl;
+            return 1;
+        }
+    }else{
+        // If the user is successfully authenticated:
+        Filesystem fs(username, adminStatus);
+        // Rest of the code to interact with the file system
+        std::cout<<"Logged in as " + username<<std::endl;
+
+        available_commands(adminStatus);
+
+        std::string command;
+        while(true){
+            std::cout<<username<<"@"<<fs.getCurrentWorkingDirectory();
+            std::getline(std::cin,command);
+            processCommand(command, fs , adminStatus);
+        }
+    }
 }

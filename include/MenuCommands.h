@@ -1,5 +1,5 @@
-#ifndef CMPT785_G5_SECURE_FILESYSTEM_MENU_COMMANDS_H
-#define CMPT785_G5_SECURE_FILESYSTEM_MENU_COMMANDS_H
+#ifndef CMPT785_G5_SECURE_FILESYSTEM_MENUCOMMANDS_H
+#define CMPT785_G5_SECURE_FILESYSTEM_MENUCOMMANDS_H
 
 #include <iostream>
 #include <iomanip>
@@ -30,4 +30,4 @@ void availableCommands(bool adminStatus) {
     std::cout << std::setw(commandWidth) << std::left << "exit" << std::setw(descriptionWidth) << std::left << "Terminate the program" << std::endl;
 }
 
-#endif //CMPT785_G5_SECURE_FILESYSTEM_MENU_COMMANDS_H
+#endif // CMPT785_G5_SECURE_FILESYSTEM_MENUCOMMANDS_H

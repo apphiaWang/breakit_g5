@@ -1,9 +1,9 @@
 #include <iostream>
 #include <vector>
-#include "headers/menu-commands.h"
-#include "headers/file-system.h"
-#include "headers/cryptography.h"
-#include "headers/string-utilities.h"
+#include "MenuCommands.h"
+#include "FileSystem.h"
+#include "Cryptography.h"
+#include "StringUtil.h"
 
 void initializeFileSystem() {
     std::filesystem::create_directories("public_keys");
@@ -24,7 +24,7 @@ bool authenticateUser(const std::string &username) {
     return false;
 }
 
-void processCommand(const std::string& command, Filesystem &fs, bool _isAdmin, const std::string &username) {
+void processCommand(const std::string& command, FileSystem &fs, bool _isAdmin, const std::string &username) {
     if(command == "exit"){
         std::cout << "Exiting... Thank you!" << std::endl;
         exit(1);
@@ -51,15 +51,15 @@ int main(int argc, char** argv) {
 
     if(!authenticateUser(username)) {
         if(adminStatus) {
-            Filesystem fs(username,adminStatus,1);
-            Filesystem::addUser(username,adminStatus);
+            FileSystem fs(username,adminStatus,1);
+            FileSystem::addUser(username,adminStatus);
         } else {
             std::cerr << "Authentication failed" << std::endl;
             return 1;
         }
     } else {
         // If the user is successfully authenticated:
-        Filesystem fs(username, adminStatus);
+        FileSystem fs(username, adminStatus);
         // Rest of the code to interact with the file system
         std::cout << "Logged in as " + username<<std::endl;
         std::cout << std::endl;
@@ -67,7 +67,7 @@ int main(int argc, char** argv) {
 
         std::string command;
         while(true) {
-            std::cout << username << "@" << fs.getCurrentWorkingDirectory();
+            std::cout << username << "@" << fs.getCurrentWorkingDirectory() << ">";
             std::getline(std::cin,command);
             processCommand(command, fs , adminStatus, username);
         }

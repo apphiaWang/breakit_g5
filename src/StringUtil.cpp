@@ -1,9 +1,4 @@
-#ifndef CMPT785_G5_SECURE_FILESYSTEM_STRING_UTILITIES_H
-#define CMPT785_G5_SECURE_FILESYSTEM_STRING_UTILITIES_H
-
-#include <iostream>
-#include <vector>
-#include <sstream>
+#include "StringUtil.h"
 
 std::vector<std::string> splitText(const std::string &s, char delimiter) {
     std::vector<std::string> result;
@@ -13,7 +8,6 @@ std::vector<std::string> splitText(const std::string &s, char delimiter) {
     while (getline(ss, item, delimiter)) {
         result.push_back(item);
     }
+
     return result;
 }
-
-#endif //CMPT785_G5_SECURE_FILESYSTEM_STRING_UTILITIES_H

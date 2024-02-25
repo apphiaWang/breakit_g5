@@ -1,22 +1,4 @@
-#ifndef CMPT785_G5_SECURE_FILESYSTEM_ENCRYPTION_H
-#define CMPT785_G5_SECURE_FILESYSTEM_ENCRYPTION_H
-
-#include <openssl/aes.h>
-#include <openssl/pem.h>
-#include <openssl/rsa.h>
-#include <openssl/evp.h>
-#include <openssl/bio.h>
-#include <openssl/err.h>
-#include <iostream>
-#include <iomanip>
-
-#ifndef PRIV_KEY_LOC
-#define PRIV_KEY_LOC "/.metadata/private_keys/"
-#endif
-
-#ifndef PUB_KEY_LOC
-#define PUB_KEY_LOC "public_keys/"
-#endif
+#include "Cryptography.h"
 
 bool createUserKey(const std::string &username, bool isAdmin) {
     bool ret = 0;
@@ -148,5 +130,3 @@ std::string decryptCipherText(std::string ciphertext, const std::string &usernam
 
     return std::string{reinterpret_cast<char *>(decryptedData.data()), static_cast<size_t>(result)};
 }
-
-#endif //CMPT785_G5_SECURE_FILESYSTEM_ENCRYPTION_H

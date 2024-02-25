@@ -68,38 +68,21 @@ void FileSystem::changeDirectory(const std::string &dir) {
         return;
     }
 
-    std::filesystem::path newPath;
-
-    if(dir=="..") {
-        if(base_directory != root_directory) {
-            newPath = base_directory.parent_path();
-        } else {
-            std::cout << "Already at the root directory. Cannot go up." << std::endl;
-            return;
-        }
-    } else if (dir.front() == '/') {
-        // Absolute path handling: navigate from root_directory
-        newPath = root_directory / dir.substr(1);
-    } else if (dir == "../..") {
-        std::string workingDirectory = getCurrentWorkingDirectory();
-        workingDirectory = "./" + workingDirectory;
-
-        if(std::filesystem::path(workingDirectory).parent_path() != root_directory) {
-            newPath = std::filesystem::path(workingDirectory).parent_path().parent_path();
-        } else {
-            std::cout << "Cannot go past root directory" << std::endl;
-            return;
-        }
-    }
-    else {
-        // Relative path handling
-        if(dir==".") {
-            newPath=base_directory;
-        } else if (dir == ".metadata") {
+    std::filesystem::path newPath = base_directory;
+    std::vector<std::string> newDir = splitText(dir,'/');
+    for (const std::string& str:newDir) {
+        if (str=="..") {
+            if (newPath != root_directory) {
+                newPath = newPath.parent_path();
+            } else {
+                std::cout << "Already at the root directory. Cannot go up." << std::endl;
+                return;
+            }
+        } else if (str == ".metadata") {
             std::cout << "Metadata access forbidden" << std::endl;
             return;
-        } else {
-            newPath = base_directory / dir;
+        } else if (str != ".") {
+            newPath /= str;
         }
     }
 
@@ -144,7 +127,7 @@ void FileSystem::listDirectoryContents(const char *directory) {
     closedir(dir);
 }
 
-void FileSystem::makeFile(const std::string& make_file, const std::string &userPath) {
+void FileSystem::makeFile(const std::string& make_file, const std::string &user) {
     // Extract filename and contents from input
     std::istringstream iss(make_file);
     std::string command, filename, contents;
@@ -160,36 +143,56 @@ void FileSystem::makeFile(const std::string& make_file, const std::string &userP
     contents.erase(0, contents.find_first_not_of(" \t"));
     contents.erase(contents.find_last_not_of(" \t") + 1);
 
-    // Check if both filename and contents are missing
+    // Check if filename and contents are missing
     if (filename.empty() && contents.empty()) {
         std::cout << "<filename> and <contents> arguments are missing, please try again" << std::endl;
         return;
-    }
-
-    // Check if filename is empty
-    if (filename.empty()) {
+    } else if (filename.empty()) {
         std::cout << "Filename not specified" << std::endl;
         return;
-    }
-
-    std::string workingDirectory = getCurrentWorkingDirectory();
-    workingDirectory = "./" + workingDirectory;
-    filename = workingDirectory + "/" +  filename;
-
-    // Check to see if any invalid characters exist in the filename
-    for (char c : filename) {
-        if (std::isspace(c) || c == '?' || c == ':' || c == '\\' || c == '*' || c == '"' || c == '|') {
-            std::cout << "Invalid characters added to the filename, please re-enter" << std::endl;
-            return;
-        }
-    }
-    std::vector<std::string> _arr = splitText(userPath,'/');
-
-    // Check if contents are missing
-    if (contents.empty()) {
+    } else if (contents.empty()) {
         std::cout << "<content> argument is missing, please try again" << std::endl;
         return;
     }
+
+    std::filesystem::path newPath = base_directory;
+    std::vector<std::string> newDir = splitText(filename,'/');
+    for (const std::string& str:newDir) {
+        // Check if there are any invalid characters in the input for the directory name
+        for (char c: str) {
+            if (std::isspace(c) || c == '?' || c == ':' || c == '\\' || c == '*' || c == '/' || c == '"' || c == '|') {
+                std::cout << "Invalid characters added to the filename, please re-enter" << std::endl;
+                return;
+            }
+        }
+
+        if (str=="..") {
+            if (newPath != root_directory) {
+                newPath = newPath.parent_path();
+            } else {
+                std::cout << "Already at the root directory. Cannot go up." << std::endl;
+                return;
+            }
+        } else if (str == ".metadata") {
+            std::cout << "Metadata access forbidden" << std::endl;
+            return;
+        } else if (str != ".") {
+            newPath /= str;
+        }
+    }
+
+    std::string userPath = "./filesystem/" + user + "/personal";
+
+    if (newPath.string().length() < userPath.length() or newPath.string().substr(0, userPath.length()) != userPath) {
+        std::cout << "Forbidden!" << std::endl;
+        return;
+    }
+
+    std::string workingDirectory = "./" + getCurrentWorkingDirectory();
+    filename = newPath;
+
+    std::vector<std::string> _arr = splitText(userPath,'/');
+
     // Check if the file already exists
     if (std::filesystem::exists(filename)) {
         std::cout << "The file '" << filename << "' already exists. It will be overwritten." << std::endl;
@@ -233,36 +236,49 @@ void FileSystem::makeFile(const std::string& make_file, const std::string &userP
     }
 }
 
-void FileSystem::createDirectory(const std::string &input, const std::string &userPath) {
-
+void FileSystem::createDirectory(const std::string &input, const std::string &user) {
     // Extract directory name from input
-    std::string command = input.substr(input.find(" ") + 1);
-    std::cout << command << std::endl;
+    std::string dir = input.substr(input.find(" ") + 1);
 
-    std::string filePath = userPath + "/" + command;
+    std::filesystem::path newPath = base_directory;
+    std::vector<std::string> newDir = splitText(dir,'/');
+    for (const std::string& str:newDir) {
+        // Check if there are any invalid characters in the input for the directory name
+        for (char c: str) {
+            if (std::isspace(c) || c == '?' || c == ':' || c == '\\' || c == '*' || c == '/' || c == '"' || c == '|') {
+                std::cout << "Invalid characters added to the directory filename, please re-enter" << std::endl;
+                return;
+            }
+        }
 
-    // Check if directory name is empty
-    if (command.empty()) {
-        std::cout << "Directory not specified" << std::endl;
+        if (str=="..") {
+            if (newPath != root_directory) {
+                newPath = newPath.parent_path();
+            } else {
+                std::cout << "Already at the root directory. Cannot go up." << std::endl;
+                return;
+            }
+        } else if (str == ".metadata") {
+            std::cout << "Metadata access forbidden" << std::endl;
+            return;
+        } else if (str != ".") {
+            newPath /= str;
+        }
+    }
+    std::string userPath = "./filesystem/" + user + "/personal";
+
+    if (newPath.string().length() < userPath.length() or newPath.string().substr(0, userPath.length()) != userPath) {
+        std::cout << "Forbidden!" << std::endl;
         return;
     }
 
-    // Check if there are any invalid characters in the input for the directory name
-    for (char c: command) {
-        if (std::isspace(c) || c == '?' || c == ':' || c == '\\' || c == '*' || c == '/' || c == '"' || c == '|') {
-            std::cout << "Invalid characters added to the directory filename, please re-enter" << std::endl;
-            return;
-        }
-    }
-
     // Check if directory already exists
-    if (std::filesystem::exists(filePath) && std::filesystem::is_directory(filePath)) {
+    if (std::filesystem::exists(newPath) && std::filesystem::is_directory(newPath)) {
         std::cout << "Directory already exists" << std::endl;
         return;
     }
 
-    // Create directory
-    std::filesystem::create_directories(filePath);
+    std::filesystem::create_directories(newPath);
     std::cout << "Directory created successfully" << std::endl;
 }
 
@@ -343,25 +359,10 @@ void FileSystem::processUserCommand(const std::string &command, bool isAdmin, co
         } else {
             std::cout << "Invalid Command" << std::endl;
         }
-    } else if (command.substr(0,6) == "mkdir " || command.substr(0,7) == "mkfile ") {
-        std::string userPath = "./filesystem/" + user + "/personal";
-        std::string workingDirectory = getCurrentWorkingDirectory();
-        workingDirectory = "./" + workingDirectory;
-
-        if(command.substr(0, 6) == "mkdir ") {
-            if(strcmp(workingDirectory.c_str(),userPath.c_str()) == 0) {
-                createDirectory(command, userPath);
-            } else {
-                std::cout << "Forbidden!" << std::endl;
-            }
-        }
-        if(command.substr(0,7) == "mkfile ") {
-            if(strcmp(workingDirectory.c_str(),userPath.c_str()) == 0) {
-                makeFile(command, userPath);
-            } else {
-                std::cout << "Forbidden!" << std::endl;
-            }
-        }
+    } else if (command.substr(0,6) == "mkdir ") {
+        createDirectory(command, user);
+    } else if(command.substr(0,7) == "mkfile ") {
+        makeFile(command, user);
     } else if (command.substr(0, 4) == "cat ") {
         std::string filename = command.substr(4);
         catFile(filename);

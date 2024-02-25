@@ -82,8 +82,7 @@ void FileSystem::changeDirectory(const std::string &dir) {
         newPath = root_directory / dir.substr(1);
     } else if (dir == "../..") {
         std::string workingDirectory = getCurrentWorkingDirectory();
-        workingDirectory.pop_back();
-        workingDirectory = "." + workingDirectory;
+        workingDirectory = "./" + workingDirectory;
 
         if(std::filesystem::path(workingDirectory).parent_path() != root_directory) {
             newPath = std::filesystem::path(workingDirectory).parent_path().parent_path();
@@ -174,8 +173,7 @@ void FileSystem::makeFile(const std::string& make_file, const std::string &userP
     }
 
     std::string workingDirectory = getCurrentWorkingDirectory();
-    workingDirectory.pop_back();
-    workingDirectory = "." + workingDirectory;
+    workingDirectory = "./" + workingDirectory;
     filename = workingDirectory + "/" +  filename;
 
     // Check to see if any invalid characters exist in the filename
@@ -269,7 +267,10 @@ void FileSystem::createDirectory(const std::string &input, const std::string &us
 }
 
 void FileSystem::catFile(const std::string &filename) {
-    std::ifstream file(filename);
+    std::string currentWorkingDirectory = getCurrentWorkingDirectory();
+    std::string filePath = currentWorkingDirectory + "/" + filename;
+
+    std::ifstream file(filePath);
     if (file.is_open()) {
         std::string line;
         while (std::getline(file, line)) {
@@ -277,7 +278,7 @@ void FileSystem::catFile(const std::string &filename) {
         }
         file.close();
     } else {
-        std::cout << "Unable to open file: " << filename << std::endl;
+        std::cout << filename << " doesn't exist." << std::endl;
     }
 }
 
@@ -331,8 +332,7 @@ void FileSystem::processUserCommand(const std::string &command, bool isAdmin, co
         listDirectoryContents((base_directory).c_str());
     } else if(command == "pwd") {
         std::string workingDirectory = getCurrentWorkingDirectory();
-        workingDirectory.pop_back();
-        workingDirectory = "." + workingDirectory;
+        workingDirectory = "./" + workingDirectory;
         std::cout << workingDirectory << std::endl;
     } else if(command.substr(0,8) == "adduser ") {
         if(isAdmin) {
@@ -346,8 +346,7 @@ void FileSystem::processUserCommand(const std::string &command, bool isAdmin, co
     } else if (command.substr(0,6) == "mkdir " || command.substr(0,7) == "mkfile ") {
         std::string userPath = "./filesystem/" + user + "/personal";
         std::string workingDirectory = getCurrentWorkingDirectory();
-        workingDirectory.pop_back();
-        workingDirectory = "." + workingDirectory;
+        workingDirectory = "./" + workingDirectory;
 
         if(command.substr(0, 6) == "mkdir ") {
             if(strcmp(workingDirectory.c_str(),userPath.c_str()) == 0) {
@@ -409,8 +408,8 @@ std::string FileSystem::getCurrentWorkingDirectory() {
             result += "/" + segment;
         } else if (segment == "filesystem") {
             filesystemFound = true;
-            result += "/" + segment;
+            result += segment;
         }
     }
-    return result + ">";
+    return result;
 }

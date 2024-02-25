@@ -67,7 +67,7 @@ int main(int argc, char** argv) {
 
         std::string command;
         while(true) {
-            std::cout << username << "@" << fs.getCurrentWorkingDirectory();
+            std::cout << username << "@" << fs.getCurrentWorkingDirectory() << ">";
             std::getline(std::cin,command);
             processCommand(command, fs , adminStatus, username);
         }

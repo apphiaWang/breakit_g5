@@ -26,8 +26,8 @@ protected:
     static std::vector<std::string> allReceivers(const std::string &sender, const std::string &filename);
     void changeDirectory(const std::string &dir);
     static void listDirectoryContents(const char *directory);
-    void makeFile(const std::string& make_file, const std::string &userPath);
-    static void createDirectory(const std::string &input, const std::string &userPath);
+    void makeFile(const std::string& make_file, const std::string &user);
+    void createDirectory(const std::string &input, const std::string &user);
     void catFile(const std::string &filename);
     static void commandShareFile(const std::filesystem::path &source, const std::filesystem::path& sharedPath ,const std::string &sourcefile, const std::string &_username, const std::string &_source_username);
 

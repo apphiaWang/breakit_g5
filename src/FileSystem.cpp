@@ -68,38 +68,21 @@ void FileSystem::changeDirectory(const std::string &dir) {
         return;
     }
 
-    std::filesystem::path newPath;
-
-    if(dir=="..") {
-        if(base_directory != root_directory) {
-            newPath = base_directory.parent_path();
-        } else {
-            std::cout << "Already at the root directory. Cannot go up." << std::endl;
-            return;
-        }
-    } else if (dir.front() == '/') {
-        // Absolute path handling: navigate from root_directory
-        newPath = root_directory / dir.substr(1);
-    } else if (dir == "../..") {
-        std::string workingDirectory = getCurrentWorkingDirectory();
-        workingDirectory = "./" + workingDirectory;
-
-        if(std::filesystem::path(workingDirectory).parent_path() != root_directory) {
-            newPath = std::filesystem::path(workingDirectory).parent_path().parent_path();
-        } else {
-            std::cout << "Cannot go past root directory" << std::endl;
-            return;
-        }
-    }
-    else {
-        // Relative path handling
-        if(dir==".") {
-            newPath=base_directory;
-        } else if (dir == ".metadata") {
+    std::filesystem::path newPath = base_directory;
+    std::vector<std::string> newDir = splitText(dir,'/');
+    for (const std::string& str:newDir) {
+        if (str=="..") {
+            if (newPath != root_directory) {
+                newPath = newPath.parent_path();
+            } else {
+                std::cout << "Already at the root directory. Cannot go up." << std::endl;
+                return;
+            }
+        } else if (str == ".metadata") {
             std::cout << "Metadata access forbidden" << std::endl;
             return;
-        } else {
-            newPath = base_directory / dir;
+        } else if (str != ".") {
+            newPath /= str;
         }
     }
 

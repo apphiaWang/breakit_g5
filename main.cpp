@@ -60,10 +60,20 @@ int main(int argc, char** argv) {
     } else {
         // If the user is successfully authenticated:
         FileSystem fs(username, adminStatus);
+
         // Rest of the code to interact with the file system
-        std::cout << "Logged in as " + username<<std::endl;
+        std::string border(40, '*');
+        std::string message = "    Welcome to G5 Secure Server    ";
+        std::string paddedMessage = "* " + message + "  *";
+
+        std::cout << border << std::endl;
+        std::cout << paddedMessage << std::endl;
+        std::cout << border << std::endl;
         std::cout << std::endl;
+
+        std::cout << "Logged in as: " + username << std::endl;
         availableCommands(adminStatus);
+        std::cout << std::endl;
 
         std::string command;
         while(true) {

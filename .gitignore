@@ -67,3 +67,6 @@
 atlassian-ide-plugin.xml
 
 .DS_Store
+
+filesystem/
+public_keys/

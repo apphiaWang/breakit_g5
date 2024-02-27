@@ -40,7 +40,7 @@ void FileSystem::fileShare(const std::string &sender, const std::string &filenam
 std::vector<std::string> FileSystem::allReceivers(const std::string &sender, const std::string &filename) {
     std::vector<std::string> receiverlist;
     std::vector<std::string> contents = splitText(filename,'/');
-    std::string _filename = contents[contents.size()/contents[0].size()-1];
+    std::string _filename = (filename.find('/') != std::string::npos) ? contents[contents.size()/contents[0].size()-1] : filename;
     std::string file = "./filesystem/"+sender+"/.metadata/shareFile.txt";
     if(std::filesystem::exists(file)) {
         std::ifstream inputFile(file);
